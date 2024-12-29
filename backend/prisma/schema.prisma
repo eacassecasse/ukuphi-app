@@ -1,0 +1,158 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// enum Role {
+//   ORGANIZER
+//   ATTENDEE
+//   ADMIN
+// }
+
+// enum Payment_Method {
+//   DEBIT_CARD
+//   CREDIT_CARD
+//   MOBILE_WALLET
+// }
+
+// enum Payment_Status {
+//   PENDING
+//   CONFIRMED
+// }
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // provider = "postgresql"
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  name          String
+  email         String         @unique
+  phone         String
+  password      String
+  role          String
+  events        Event[]
+  posts         Post[]
+  notifications Notification[]
+  comments      Comment[]
+
+  @@map("users")
+}
+
+model Event {
+  id           String          @id @default(uuid())
+  organizerId  String          @map("organizer_id")
+  title        String
+  description  String
+  location     String
+  image_url    String
+  tickets_sold Int             @default(0)
+  date         DateTime
+  organizer    User            @relation(fields: [organizerId], references: [id])
+  tickets      Ticket[]
+  comments     Event_Comment[]
+
+  @@map("events")
+}
+
+model Ticket {
+  id      String   @id @default(uuid())
+  eventId String   @map("event_id")
+  type    String
+  price   Float
+  event   Event    @relation(fields: [eventId], references: [id])
+  payment Payment?
+
+  @@map("tickets")
+}
+
+model Payment {
+  id         String   @id @default(uuid())
+  ticketId   String   @unique @map("ticket_id")
+  amount     Float
+  method     String
+  status     String
+  qr_code    String
+  created_at DateTime @default(now())
+  ticket     Ticket   @relation(fields: [ticketId], references: [id])
+
+  @@map("payments")
+}
+
+model Notification {
+  id      String   @id @default(uuid())
+  userId  String   @map("user_id")
+  message String
+  type    String
+  sentAt  DateTime @map("sent_at")
+  user    User     @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model Post {
+  id             String         @id @default(uuid())
+  authorId       String         @map("author_id")
+  title          String
+  content        String
+  location       String
+  featured_image String
+  publishedAt    DateTime       @map("published_at")
+  author         User           @relation(fields: [authorId], references: [id])
+  comments       Post_Comment[]
+  tags           Tag[]
+
+  @@map("posts")
+}
+
+model Tag {
+  id      String @id @default(uuid())
+  postId  String @map("post_id")
+  content String
+  post    Post   @relation(fields: [postId], references: [id])
+
+  @@map("tags")
+}
+
+model Comment {
+  id             String          @id @default(uuid())
+  userId         String          @map("user_id")
+  title          String
+  content        String
+  commentedAt    DateTime        @map("commented_at")
+  user           User            @relation(fields: [userId], references: [id])
+  event_comments Event_Comment[]
+  post_comments  Post_Comment[]
+
+  @@map("comments")
+}
+
+model Event_Comment {
+  id        String @id @default(uuid())
+  eventId   String @map("event_id")
+  commentId String @map("comment_id")
+
+  event   Event   @relation(fields: [eventId], references: [id])
+  comment Comment @relation(fields: [commentId], references: [id])
+
+  @@unique([eventId, commentId])
+  @@map("event_comments")
+}
+
+model Post_Comment {
+  id        String @id @default(uuid())
+  postId    String @map("post_id")
+  commentId String @map("comment_id")
+
+  post    Post    @relation(fields: [postId], references: [id])
+  comment Comment @relation(fields: [commentId], references: [id])
+
+  @@unique([postId, commentId])
+  @@map("post_comments")
+}
