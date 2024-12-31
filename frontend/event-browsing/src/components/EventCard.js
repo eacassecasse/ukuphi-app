@@ -9,7 +9,7 @@ const EventCard = ({ event }) => {
         <p>{event.location}</p>
         <p>{event.date}</p>
         <p>{event.price}</p>
-        <button className="bg-blue-500 text-white px-4 py-2 mt-2">{event.buttonText}</button>
+        <button className="bg-blue-500 text-white px-4 py-2 mt-2 hover:bg-orange-700">{event.buttonText}</button>
       </div>
     </div>
   );

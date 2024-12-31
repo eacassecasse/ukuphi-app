@@ -4,7 +4,10 @@ const SearchFilters = () => {
   return (
     <div className="bg-gray-100 py-8">
       <div className="container mx-auto text-center">
-        <h2 className="text-3xl font-bold mb-4">Search for Events</h2>
+      <h2 className="text-3xl font-bold mb-4 h-12 bg-gradient-to-r from-orange-600 to-blue-900 bg-clip-text text-transparent p-4">
+  Search for Events
+</h2>
+
         <div className="flex justify-center space-x-4">
           <input
             type="text"
