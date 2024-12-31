@@ -82,8 +82,9 @@ const Footer = () => {
             <a href="#" className="hover:underline">Terms of Service</a>
           </div>
         </div>
+      </div>
     </footer>
-  );
+  )
 };
 
 export default Footer;
