@@ -6,6 +6,7 @@ import rateLimit from "fastify-rate-limiter";
 import { authenticate } from "./plugins/authenticate";
 import { routes } from "./routes";
 import { registerErrorHandler } from "./plugins/errorHandler";
+import './plugins/'
 
 
 const fastify = Fastify({

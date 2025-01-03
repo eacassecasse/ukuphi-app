@@ -45,7 +45,6 @@ export class EventController {
   }
 
   static async listHandler(request: FastifyRequest, reply: FastifyReply) {
-    const user = request.user;
 
     await redis.connect();
 
