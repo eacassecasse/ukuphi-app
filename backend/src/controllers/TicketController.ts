@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { EventService } from "../services/EventService";
 import { validateWithZod } from "../utils/validation.zod";
-import { CreateTicketInput, schemas } from "../inputs/ticket.schema";
+import { CreateTicketInput, schemas, UpdateTicketBody } from "../inputs/ticket.schema";
 import { TicketService } from "../services/TicketService";
 import {
   CreatePaymentInput,
@@ -115,7 +115,7 @@ export class TicketController {
   static async updateHandler(
     request: FastifyRequest<{
       Params: { id: string; ticketId: string };
-      Body: CreateTicketInput;
+      Body: UpdateTicketBody;
     }>,
     reply: FastifyReply
   ) {
@@ -125,7 +125,7 @@ export class TicketController {
       });
     }
 
-    const body = validateWithZod(schemas.ticketCore)(request.body);
+    const body = validateWithZod(schemas.updateTicketCore)(request.body);
 
     const { id, ticketId } = request.params;
     if (!id) {

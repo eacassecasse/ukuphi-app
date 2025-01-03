@@ -4,6 +4,7 @@ import { validateWithZod } from "../utils/validation.zod";
 import {
   CreateUserInput,
   schemas,
+  UpdateUserBody,
   UpdateUserInput,
 } from "../inputs/user.schema";
 import { db } from "../lib/prisma";
@@ -31,10 +32,10 @@ export class UserController {
   }
 
   static async updateHandler(
-    request: FastifyRequest<{ Body: CreateUserInput }>,
+    request: FastifyRequest<{ Body: UpdateUserBody }>,
     reply: FastifyReply
   ) {
-    const body = validateWithZod(schemas.createUserSchema)(request.body);
+    const body = validateWithZod(schemas.updateUserCore)(request.body);
 
     const input = {
       id: request.user.id,

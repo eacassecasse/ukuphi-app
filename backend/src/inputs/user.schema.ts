@@ -33,8 +33,40 @@ const createUserSchema = userCore.extend({
   }),
 });
 
-const updateUserSchema = createUserSchema.extend({
-  id: z.string(),
+const updateUserCore = z.object({
+  email: z
+    .string({
+      invalid_type_error: "Email is not valid",
+    })
+    .email()
+    .optional(),
+  name: z
+    .string({
+      invalid_type_error: "Name must be a string",
+    })
+    .optional(),
+  phone: z
+    .string({
+      invalid_type_error: "Phone number must be a string",
+    })
+    .regex(/^\+?[1-9]\d{1,14}$/, {
+      message:
+        "Phone number must be a valid international format (e.g., +1234567890)",
+    })
+    .optional(),
+  role: z
+    .string({
+      invalid_type_error: "Role must be a string",
+    })
+    .optional(),
+  password: z.string().optional(),
+});
+
+const updateUserSchema = updateUserCore.extend({
+  id: z.string({
+    required_error: "ID is required",
+    invalid_type_error: "ID must be a UUID String"
+  }).uuid()
 })
 
 const createUserResponseSchema = userCore.extend({
@@ -44,8 +76,10 @@ const createUserResponseSchema = userCore.extend({
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type CreateUserResponse = z.infer<typeof createUserResponseSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type UpdateUserBody = z.infer<typeof updateUserCore>;
 
 export const schemas = {
   createUserSchema,
   createUserResponseSchema,
+  updateUserCore,
 };

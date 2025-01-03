@@ -1,6 +1,4 @@
-import {
-  CreatePostCommentInput,
-} from "../inputs/comment.schema";
+import { CreatePostCommentInput } from "../inputs/comment.schema";
 import { CreatePostInput, UpdatePostInput } from "../inputs/post.schema";
 import { db } from "../lib/prisma";
 import { NotFoundError } from "../models/errors";
@@ -100,9 +98,10 @@ export class PostService {
       throw new NotFoundError("Post not found");
     }
 
-    const updatedData: Partial<typeof dbPost> = {
-      publishedAt: dbPost.publishedAt,
-      ...rest,
+    const updatedData = {
+      ...(input.title ? { title: input.title } : {}),
+      ...(input.content ? { content: input.content } : {}),
+      ...(input.featured_image ? { featured_image: input.featured_image } : {}),
     };
 
     const post = await db.post.update({
@@ -171,9 +170,9 @@ export class PostService {
           select: {
             id: true,
             name: true,
-            email: true
-          }
-        }
+            email: true,
+          },
+        },
       },
     });
 
