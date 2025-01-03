@@ -1,5 +1,5 @@
 import { FastifyJWT } from "@fastify/jwt";
-import fastify, { FastifyReply, FastifyRequest } from "fastify";
+import { FastifyReply, FastifyRequest } from "fastify";
 
 export async function authenticate(
   request: FastifyRequest,
@@ -17,7 +17,11 @@ export async function authenticate(
 
   try {
     const decoded = request.jwt.verify(token);
-    const refreshToken = await generateRefreshToken(decoded as FastifyJWT["user"]);
+    const refreshToken = await generateRefreshToken(
+      request,
+      decoded as FastifyJWT["user"]
+    );
+
     reply.setCookie("refresh_token", refreshToken, {
       httpOnly: true,
       secure: true,
@@ -31,9 +35,11 @@ export async function authenticate(
   }
 }
 
-export async function generateRefreshToken(user: FastifyJWT["user"]) {
-  const refreshToken = fastify().jwt.sign(user, { expiresIn: '7d'});
+export async function generateRefreshToken(
+  request: FastifyRequest,
+  user: FastifyJWT["user"]
+) {
+  const refreshToken = request.jwt.sign(user, { expiresIn: "7d" });
 
   return refreshToken;
 }
-

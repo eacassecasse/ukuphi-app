@@ -1,6 +1,6 @@
 import fastify, { FastifyReply, FastifyRequest } from "fastify";
 import { UserService } from "../services/UserService";
-import { verifyPassword } from "../utils/utils";
+import { verifyPassword } from "../utils/bcrypt";
 import { LoginInput } from "../inputs/auth.schema";
 import { generateRefreshToken } from "../plugins/authenticate";
 import { FastifyJWT } from "@fastify/jwt";
@@ -39,7 +39,8 @@ export class AuthController {
       };
 
       const token = request.jwt.sign(payload, { expiresIn: "15m" });
-      const refreshToken = await generateRefreshToken(payload);
+
+      const refreshToken = await generateRefreshToken(request, payload);
 
       reply.setCookie("refresh_token", refreshToken, {
         httpOnly: true,
@@ -74,6 +75,7 @@ export class AuthController {
     try {
       const newAccessToken = request.jwt.sign(decoded, { expiresIn: "15m" });
       const newRefreshToken = await generateRefreshToken(
+        request,
         decoded as FastifyJWT["user"]
       );
 

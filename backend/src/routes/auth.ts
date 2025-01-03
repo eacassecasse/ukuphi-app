@@ -1,17 +1,28 @@
 import { FastifyInstance } from "fastify";
 import { schemas } from "../inputs/auth.schema";
 import { AuthController } from "../controllers/AuthController";
-import { validateWithZod } from "../utils/utils";
+import { validateWithZod } from "../utils/validation.zod";
+import { UserController } from "../controllers/UserController";
 
 export async function authRoutes(fastify: FastifyInstance) {
+  fastify.post("/register", UserController.registerHandler);
+
   fastify.get(
-    "/me",
+    "/profile",
     {
       preHandler: [fastify.authenticate],
     },
     async (request) => {
       return { user: request.user };
     }
+  );
+
+  fastify.put(
+    "/profile",
+    {
+      preHandler: [fastify.authenticate],
+    },
+    UserController.updateHandler
   );
 
   fastify.post(
@@ -41,6 +52,8 @@ export async function authRoutes(fastify: FastifyInstance) {
     },
     AuthController.refreshTokenHandler
   );
+
+  fastify.post("/verify-otp", UserController.registerHandler);
 
   fastify.delete(
     "/logout",

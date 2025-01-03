@@ -30,22 +30,22 @@ async function main() {
   // Seed data for tickets
   await prisma.ticket.createMany({
     data: [
-      { id: '1', eventId: '1', type: 'Standard', price: 50.0 },
-      { id: '2', eventId: '1', type: 'VIP', price: 100.0 },
-      { id: '3', eventId: '2', type: 'Standard', price: 75.0 },
-      { id: '4', eventId: '3', type: 'Standard', price: 30.0 },
-      { id: '5', eventId: '4', type: 'VIP', price: 120.0 },
+      { id: '1', existentQuantity: 750, eventId: '1', type: 'Standard', price: 50.0 },
+      { id: '2', existentQuantity: 200, eventId: '1', type: 'VIP', price: 100.0 },
+      { id: '3', existentQuantity: 500, eventId: '2', type: 'Standard', price: 75.0 },
+      { id: '4', existentQuantity: 1200, eventId: '3', type: 'Standard', price: 30.0 },
+      { id: '5', existentQuantity: 120, eventId: '4', type: 'VIP', price: 120.0 },
     ],
   });
 
   // Seed data for payments
   await prisma.payment.createMany({
     data: [
-      { id: '1', ticketId: '1', amount: 50.0, method: 'DEBIT_CARD', status: 'CONFIRMED', qr_code: 'QR1', created_at: new Date('2024-07-01 12:00:00') },
-      { id: '2', ticketId: '2', amount: 100.0, method: 'CREDIT_CARD', status: 'CONFIRMED', qr_code: 'QR2', created_at: new Date('2024-07-02 14:30:00') },
-      { id: '3', ticketId: '3', amount: 75.0, method: 'MOBILE_WALLET', status: 'PENDING', qr_code: 'QR3', created_at: new Date('2024-07-03 16:45:00') },
-      { id: '4', ticketId: '4', amount: 30.0, method: 'DEBIT_CARD', status: 'CONFIRMED', qr_code: 'QR4', created_at: new Date('2024-07-04 18:00:00') },
-      { id: '5', ticketId: '5', amount: 120.0, method: 'CREDIT_CARD', status: 'CONFIRMED', qr_code: 'QR5', created_at: new Date('2024-07-05 20:15:00') },
+      { id: '1', userId: '1', ticketId: '1', amount: 50.0, method: 'DEBIT_CARD', status: 'CONFIRMED', qr_code: 'QR1', created_at: new Date('2024-07-01 12:00:00') },
+      { id: '2', userId: '2',ticketId: '2', amount: 100.0, method: 'CREDIT_CARD', status: 'CONFIRMED', qr_code: 'QR2', created_at: new Date('2024-07-02 14:30:00') },
+      { id: '3', userId: '1', ticketId: '3', amount: 75.0, method: 'MOBILE_WALLET', status: 'PENDING', qr_code: 'QR3', created_at: new Date('2024-07-03 16:45:00') },
+      { id: '4', userId: '3', ticketId: '4', amount: 30.0, method: 'DEBIT_CARD', status: 'CONFIRMED', qr_code: 'QR4', created_at: new Date('2024-07-04 18:00:00') },
+      { id: '5', userId: '5', ticketId: '5', amount: 120.0, method: 'CREDIT_CARD', status: 'CONFIRMED', qr_code: 'QR5', created_at: new Date('2024-07-05 20:15:00') },
     ],
   });
 

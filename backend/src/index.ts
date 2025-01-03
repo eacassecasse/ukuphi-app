@@ -2,11 +2,10 @@ import Fastify, { FastifyRequest } from "fastify";
 import cors from "@fastify/cors";
 import fjwt, { FastifyJWT } from "@fastify/jwt";
 import fastifyCookie from "fastify-cookie";
-("fastify-cookie");
 import rateLimit from "fastify-rate-limiter";
-import userRoutes from "./routes/user";
-import { authRoutes } from "./routes/auth";
 import { authenticate } from "./plugins/authenticate";
+import { routes } from "./routes";
+
 
 const fastify = Fastify({
   logger: true,
@@ -42,8 +41,7 @@ async function bootstrap() {
     });
 
     //Routes
-    fastify.register(userRoutes, { prefix: "api/v1/users" });
-    fastify.register(authRoutes, { prefix: "api/v1/auth" });
+    fastify.register(routes, { prefix: "/api/v1"})  
 
     await fastify.listen({
       port: 5000,

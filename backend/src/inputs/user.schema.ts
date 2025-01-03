@@ -33,12 +33,17 @@ const createUserSchema = userCore.extend({
   }),
 });
 
+const updateUserSchema = createUserSchema.extend({
+  id: z.string(),
+})
+
 const createUserResponseSchema = userCore.extend({
   id: z.string(),
 });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type CreateUserResponse = z.infer<typeof createUserResponseSchema>;
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 
 export const schemas = {
   createUserSchema,
