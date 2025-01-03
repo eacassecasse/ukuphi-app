@@ -2,6 +2,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { validateWithZod } from "../utils/validation.zod";
 import { CreateTagInput, schemas } from "../inputs/tag.schema";
 import { TagService } from "../services/TagsService";
+import { redis } from "../lib/redis";
 
 export class TagController {
   static async registerHandler(
@@ -53,6 +54,15 @@ export class TagController {
           message: "Missing ID param",
         });
       }
+
+      await redis.connect();
+      const cacheKey = `posts-${id}-tags-cached`;
+      const cached = await redis.get(cacheKey);
+
+      if (cached) {
+        return reply.status(200).send(JSON.parse(cached));
+      }
+
       const tags = await TagService.find(id);
 
       if (!tags || tags.length === 0) {
@@ -60,6 +70,8 @@ export class TagController {
           message: "No tag found for this post",
         });
       }
+
+      await redis.set(cacheKey, JSON.stringify(tags), 3600);
 
       return reply.status(200).send(tags);
     } catch (error: any) {
@@ -90,9 +102,20 @@ export class TagController {
     }
 
     try {
+
+      await redis.connect();
+      const cacheKey = `posts-${id}-tags:${tagId}`;
+      const cached = await redis.get(cacheKey);
+
+      if (cached) {
+        return reply.status(200).send(JSON.parse(cached));
+      }
+
       const tag = await TagService.findOne(id, tagId);
 
       await validateWithZod(schemas.createTagResponseSchema)(tag);
+
+      await redis.set(cacheKey, JSON.stringify(tag), 3600);
 
       return reply.status(200).send(tag);
     } catch (error: any) {

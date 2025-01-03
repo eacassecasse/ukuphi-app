@@ -4,6 +4,7 @@ import { validateWithZod } from "../utils/validation.zod";
 import { CreateTicketInput, schemas } from "../inputs/ticket.schema";
 import { TicketService } from "../services/TicketService";
 import { CreatePaymentInput, schemas as paymentSchema } from "../inputs/payment.schema";
+import { redis } from "../lib/redis";
 
 export class TicketController {
   static async registerHandler(
@@ -56,6 +57,16 @@ export class TicketController {
           message: "Missing ID param"
         })
       }
+
+      await redis.connect();
+
+      const cacheKey = `events-${id}-tickets`;
+      const cached = await redis.get(cacheKey);
+
+      if (cached) {
+        return reply.status(200).send(JSON.parse(cached));
+      }
+
       const tickets = await TicketService.find(id);
 
       if (!tickets || tickets.length === 0) {
@@ -63,6 +74,8 @@ export class TicketController {
           message: "No ticket found for this event",
         });
       }
+
+      await redis.set(cacheKey, JSON.stringify(tickets), 3600);
 
       return reply.status(200).send(tickets);
     } catch (error: any) {
@@ -94,10 +107,21 @@ export class TicketController {
     }
 
     try {
+      await redis.connect();
+
+      const cacheKey = `events-${id}-tickets:${ticketId}`;
+      const cached = await redis.get(cacheKey);
+
+      if (cached) {
+        return reply.status(200).send(JSON.parse(cached));
+      }
+
       const ticket = await TicketService.findOne(id, ticketId);
 
       await validateWithZod(schemas.createTicketResponseSchema)(ticket)
 
+      await redis.set(cacheKey, JSON.stringify(ticket), 3600);
+      
       return reply.status(200).send(ticket);
     } catch (error: any) {
       console.error(error);

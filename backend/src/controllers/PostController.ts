@@ -1,34 +1,29 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { EventService } from "../services/EventService";
-import {
-  CreateEventInput,
-  CreateEventResponse,
-  schemas,
-  UpdateEventInput,
-} from "../inputs/event.schema";
 import { validateWithZod } from "../utils/validation.zod";
 import { schemas as commentSchema, CreateCommentInput } from "../inputs/comment.schema";
 import { PostService } from "../services/PostService";
+import { redis } from "../lib/redis";
+import { schemas, CreatePostInput, CreatePostResponse, UpdatePostInput } from "../inputs/post.schema";
 
 export class PostController {
   static async createHandler(
-    request: FastifyRequest<{ Body: CreateEventInput }>,
+    request: FastifyRequest<{ Body: CreatePostInput }>,
     reply: FastifyReply
   ) {
-    if (request.user.role !== "ORGANIZER") {
+    if (request.user.role === "ATTENDEE") {
       return reply.status(403).send({
         message: "Not authorized",
       });
     }
 
-    const body = validateWithZod(schemas.createEventSchema)(request.body);
+    const body = validateWithZod(schemas.createPostSchema)(request.body);
 
     try {
-      const event = await EventService.createEvent(request.user.id, body);
+      const post = await PostService.createPost(request.user.id, body);
 
-      const response: CreateEventResponse = {
-        ...event,
-        date: event.date.toISOString().replace("T", " ").split(".")[0],
+      const response: CreatePostResponse = {
+        ...post,
+        published_at: post.publishedAt.toISOString().replace("T", " ").split(".")[0],
       }
 
 
@@ -46,21 +41,26 @@ export class PostController {
     const user = request.user
 
     try {
-      let events;
+      await redis.connect();
 
-      if (user && user.role === "ORGANIZER") {
-        events = await EventService.findEventsByOrganizer(user.id);
-      } else {
-        events = await EventService.find();
+      const cacheKey = 'posts-cached';
+      const cached = await redis.get(cacheKey);
+
+      if (cached) {
+        return reply.status(200).send(JSON.parse(cached));
       }
 
-      if (!events || events.length === 0) {
+      const posts = await PostService.find();
+
+      if (!posts || posts.length === 0) {
         return reply.status(404).send({
-          message: "No events found",
+          message: "No posts found",
         });
       }
 
-      return reply.status(200).send(events);
+      await redis.set(cacheKey, JSON.stringify(posts), 3600);
+
+      return reply.status(200).send(posts);
     } catch (error: any) {
       console.error(error);
       reply.status(500).send({
@@ -84,12 +84,22 @@ export class PostController {
     }
 
     try {
-      const event = await EventService.findOne(id);
+      await redis.connect();
+      const cacheKey = `posts:${id}`;
+      const cached = await redis.get(cacheKey);
 
-      const response: CreateEventResponse = {
-        ...event,
-        date: event.date.toISOString().replace("T", " ").split(".")[0],
+      if (cached) {
+        return reply.status(200).send(JSON.parse(cached));
       }
+
+      const post = await PostService.findOne(id);
+
+      const response: CreatePostResponse = {
+        ...post,
+        published_at: post.publishedAt.toISOString().replace("T", " ").split(".")[0],
+      }
+
+      await redis.set(cacheKey, JSON.stringify(response), 3600);
 
       return reply.status(200).send(response);
     } catch (error: any) {
@@ -102,10 +112,10 @@ export class PostController {
   }
 
   static async updateHandler(
-    request: FastifyRequest<{ Params: { id: string }; Body: UpdateEventInput }>,
+    request: FastifyRequest<{ Params: { id: string }; Body: UpdatePostInput }>,
     reply: FastifyReply
   ) {
-    if (request.user.role !== "ORGANIZER") {
+    if (request.user.role === "ATTENDEE") {
       return reply.status(403).send({
         message: "Not authorized",
       });
@@ -119,18 +129,18 @@ export class PostController {
       });
     }
 
-    const body = validateWithZod(schemas.createEventSchema)(request.body);
+    const body = validateWithZod(schemas.createPostSchema)(request.body);
 
     try {
       const input = {
         id,
         ...body,
       };
-      const event = await EventService.updateEvent(request.user.id, body);
+      const post = await PostService.updatePost(request.user.id, body);
 
-      const response: CreateEventResponse = {
-        ...event,
-        date: event.date.toISOString().replace("T", " ").split(".")[0],
+      const response: CreatePostResponse = {
+        ...post,
+        published_at: post.publishedAt.toISOString().replace("T", " ").split(".")[0],
       }
 
       return reply.status(200).send(response);
@@ -147,7 +157,7 @@ export class PostController {
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply
   ) {
-    if (request.user.role !== "ORGANIZER") {
+    if (request.user.role === "ATTENDEE") {
       return reply.status(403).send({
         message: "Not authorized",
       });
@@ -162,7 +172,7 @@ export class PostController {
     }
 
     try {
-      await EventService.deleteEvent(request.user.id, id);
+      await PostService.deletePost(request.user.id, id);
 
       return reply.status(204).send();
     } catch (error: any) {

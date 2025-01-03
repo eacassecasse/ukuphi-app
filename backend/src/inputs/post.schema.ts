@@ -1,5 +1,17 @@
+import dayjs from "dayjs";
 import * as z from "zod";
 
+const dateSchema = z
+  .string({
+    required_error: "Date is required",
+  })
+  .refine(
+    (value) => dayjs(value, "YYYY-MM-DD HH:mm:ss", true).isValid(),
+    {
+      message: "Date must be in the format YYYY-MM-DD HH:mm:ss and valid",
+    }
+  );
+  
 const createPostSchema = z.object({
   title: z.string({
     required_error: "Title is required",
@@ -21,7 +33,7 @@ const updatePostSchema = createPostSchema.extend({
 
 const createPostResponseSchema = createPostSchema.extend({
   id: z.string(),
-  published_at: z.date(),
+  published_at: dateSchema,
 });
 
 export type CreatePostInput = z.infer<typeof createPostSchema>;
