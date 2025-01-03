@@ -21,15 +21,14 @@ export class TicketService {
   }
 
   static async findOne(id: string, ticketId: string) {
-
     const event = await EventService.findOne(id);
 
     const ticket = await db.ticket.findUnique({
       where: {
         id: ticketId,
-        eventId: event.id
-       },
-       select: {
+        eventId: event.id,
+      },
+      select: {
         id: true,
         price: true,
         type: true,
@@ -40,10 +39,10 @@ export class TicketService {
             title: true,
             description: true,
             location: true,
-            date: true
-          }
-        }
-       }
+            date: true,
+          },
+        },
+      },
     });
 
     if (!ticket) {
@@ -83,17 +82,17 @@ export class TicketService {
             title: true,
             description: true,
             location: true,
-            date: true
-          }
-        }
-       }
+            date: true,
+          },
+        },
+      },
     });
 
     return ticket;
   }
 
   static async updateTicket(organizerId: string, input: UpdateTicketInput) {
-    const { event_id, id , ...rest } = input;
+    const { event_id, id, ...rest } = input;
 
     const event = await db.event.findUnique({
       where: {
@@ -108,14 +107,20 @@ export class TicketService {
 
     await TicketService.findOne(event.id, id);
 
+    const updatedData = {
+      ...(input.price ? { price: input.price } : {}),
+      ...(input.existentQuantity
+        ? { existentQuantity: input.existentQuantity }
+        : {}),
+      ...(input.type ? { type: input.type } : {}),
+    };
+
     const ticket = await db.ticket.update({
       where: {
         id,
-        eventId: event.id
+        eventId: event.id,
       },
-      data: {
-        ...rest,
-      },
+      data: updatedData,
       select: {
         id: true,
         price: true,
@@ -127,10 +132,10 @@ export class TicketService {
             title: true,
             description: true,
             location: true,
-            date: true
-          }
-        }
-       }
+            date: true,
+          },
+        },
+      },
     });
 
     return ticket;
@@ -181,17 +186,17 @@ export class TicketService {
     if (isPaid) {
       payment = await db.payment.update({
         where: {
-          id: isPaid.id
+          id: isPaid.id,
         },
         data: {
-          amount: isPaid.amount + input.amount
-        }
-      })
+          amount: isPaid.amount + input.amount,
+        },
+      });
     } else {
       const qrCode = await QRCode.toDataURL(
         `user-${userId}:payment:${ticket.id}:${input.method}-${input.amount}`
       );
-  
+
       payment = await db.payment.create({
         data: {
           userId,
@@ -212,22 +217,20 @@ export class TicketService {
               id: true,
               name: true,
               email: true,
-            }
+            },
           },
           ticket: {
             select: {
               id: true,
               price: true,
               existentQuantity: true,
-              type: true
-            }
-          }
-        }
+              type: true,
+            },
+          },
+        },
       });
-  
     }
 
-    
     return payment;
   }
 

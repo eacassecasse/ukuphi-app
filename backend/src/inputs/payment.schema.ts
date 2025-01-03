@@ -17,9 +17,17 @@ const createPaymentSchema = paymentCore.extend({
     .uuid(),
 });
 
-const updatePaymentSchema = createPaymentSchema.extend({
-  id: z.string(),
+const updatePaymentCore = z.object({
+  amount: z.number().optional(),
+  method: z.string().optional(),
 });
+
+const updatePaymentSchema = updatePaymentCore.extend({
+  id: z.string({
+    required_error: "ID is required",
+    invalid_type_error: "ID must be a UUID String"
+  }).uuid()
+})
 
 const createPaymentResponseSchema = paymentCore.extend({
   id: z.string(),
@@ -36,9 +44,11 @@ const createPaymentResponseSchema = paymentCore.extend({
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>;
 export type CreatePaymentResponse = z.infer<typeof createPaymentResponseSchema>;
 export type UpdatePaymentInput = z.infer<typeof updatePaymentSchema>;
+export type UpdatePaymentBody = z.infer<typeof updatePaymentCore>;
 
 export const schemas = {
   createPaymentSchema,
   createPaymentResponseSchema,
-  paymentCore
+  paymentCore,
+  updatePaymentCore
 };

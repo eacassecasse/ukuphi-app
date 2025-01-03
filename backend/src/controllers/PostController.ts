@@ -11,6 +11,7 @@ import {
   CreatePostInput,
   CreatePostResponse,
   UpdatePostInput,
+  UpdatePostBody,
 } from "../inputs/post.schema";
 
 export class PostController {
@@ -98,7 +99,7 @@ export class PostController {
   }
 
   static async updateHandler(
-    request: FastifyRequest<{ Params: { id: string }; Body: UpdatePostInput }>,
+    request: FastifyRequest<{ Params: { id: string }; Body: UpdatePostBody }>,
     reply: FastifyReply
   ) {
     if (request.user.role === "ATTENDEE") {
@@ -115,7 +116,7 @@ export class PostController {
       });
     }
 
-    const body = validateWithZod(schemas.createPostSchema)(request.body);
+    const body = validateWithZod(schemas.updatePostCore)(request.body);
 
     const input = {
       id,

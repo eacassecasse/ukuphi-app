@@ -12,6 +12,14 @@ export class UserService {
       where: {
         email,
       },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        password: true,
+      },
     });
 
     if (!user) {
@@ -25,6 +33,14 @@ export class UserService {
     const user = await db.user.findUnique({
       where: {
         id,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        verified: true,
       },
     });
 
@@ -52,6 +68,14 @@ export class UserService {
 
     const user = await db.user.create({
       data: { ...rest, role: userRole, password: hashedPassword },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        verified: true,
+      },
     });
 
     return user;
@@ -67,15 +91,27 @@ export class UserService {
       throw new NotFoundError("User not found");
     }
 
-    const updatedData: Partial<typeof dbUser> = {
-      ...(password && { password: await hashPassword(password) }),
-      ...(role && { role: role.toLocaleUpperCase() }),
-      ...rest,
+    const updatedData = {
+      ...(input.name ? { name: input.name } : {}),
+      ...(input.email ? { email: input.email } : {}),
+      ...(input.phone ? { phone: input.phone } : {}),
+      ...(input.password
+        ? { password: await hashPassword(input.password) }
+        : {}),
+      ...(input.role ? { role: input.role.toLocaleUpperCase() } : {}),
     };
 
     const user = await db.user.update({
       where: { id: dbUser.id },
       data: updatedData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        verified: true,
+      },
     });
 
     return user;

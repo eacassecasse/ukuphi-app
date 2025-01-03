@@ -4,6 +4,7 @@ import {
   CreateEventInput,
   CreateEventResponse,
   schemas,
+  UpdateEventBody,
   UpdateEventInput,
 } from "../inputs/event.schema";
 import { validateWithZod } from "../utils/validation.zod";
@@ -102,7 +103,7 @@ export class EventController {
   }
 
   static async updateHandler(
-    request: FastifyRequest<{ Params: { id: string }; Body: UpdateEventInput }>,
+    request: FastifyRequest<{ Params: { id: string }; Body: UpdateEventBody }>,
     reply: FastifyReply
   ) {
     if (request.user.role === "ATTENDEE") {
@@ -119,7 +120,7 @@ export class EventController {
       });
     }
 
-    const body = validateWithZod(schemas.createEventSchema)(request.body);
+    const body = validateWithZod(schemas.updateEventCore)(request.body);
 
     const input = {
       id,

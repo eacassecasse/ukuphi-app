@@ -81,9 +81,12 @@ export class EventService {
       throw new NotFoundError("Event not found");
     }
 
-    const updatedData: Partial<typeof dbEvent> = {
-      ...(date && { date: new Date(date) }),
-      ...rest,
+    const updatedData = {
+      ...(input.title ? { title: input.title } : {}),
+      ...(input.description ? { description: input.description } : {}),
+      ...(input.date ? { date: new Date(input.date.replace(" ", "T")) } : {}),
+      ...(input.image_url ? { image_url: input.image_url } : {}),
+      ...(input.location ? { location: input.location } : {}),
     };
 
     const event = await db.event.update({
