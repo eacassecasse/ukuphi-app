@@ -8,6 +8,7 @@ import {
 } from "../inputs/event.schema";
 import { validateWithZod } from "../utils/validation.zod";
 import { schemas as commentSchema, CreateCommentInput } from "../inputs/comment.schema";
+import { redis } from "../lib/redis";
 
 export class EventController {
   static async registerHandler(
@@ -45,6 +46,15 @@ export class EventController {
     const user = request.user
 
     try {
+      await redis.connect();
+
+      const cacheKey = 'events-cached';
+      const cached = await redis.get(cacheKey);
+
+      if (cached) {
+        return reply.status(200).send(JSON.parse(cached));
+      }
+
       const events = await EventService.find();
 
       if (!events || events.length === 0) {
@@ -52,6 +62,8 @@ export class EventController {
           message: "No events found",
         });
       }
+
+      await redis.set(cacheKey, JSON.stringify(events),  3600);
 
       return reply.status(200).send(events);
     } catch (error: any) {
@@ -77,12 +89,24 @@ export class EventController {
     }
 
     try {
+
+      await redis.connect();
+
+      const cacheKey = `events:${id}`;
+
+      const cached = await redis.get(cacheKey);
+
+      if (cached) {
+        return reply.status(200).send(JSON.parse(cached));
+      }
       const event = await EventService.findOne(id);
 
       const response: CreateEventResponse = {
         ...event,
         date: event.date.toISOString().replace("T", " ").split(".")[0],
       }
+
+      await redis.set(cacheKey, JSON.stringify(response), 3600);
 
       return reply.status(200).send(response);
     } catch (error: any) {
