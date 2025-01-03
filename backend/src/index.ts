@@ -5,11 +5,14 @@ import fastifyCookie from "fastify-cookie";
 import rateLimit from "fastify-rate-limiter";
 import { authenticate } from "./plugins/authenticate";
 import { routes } from "./routes";
+import { registerErrorHandler } from "./plugins/errorHandler";
 
 
 const fastify = Fastify({
   logger: true,
 });
+
+registerErrorHandler(fastify);
 
 fastify.get("/hello", async (req, res) => {
   return { message: "Hello world!" };

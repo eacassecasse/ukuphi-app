@@ -9,7 +9,7 @@ export class TagController {
     request: FastifyRequest<{ Params: { id: string }; Body: CreateTagInput }>,
     reply: FastifyReply
   ) {
-    if (request.user.role !== "ORGANIZER") {
+    if (request.user.role === "ATTENDEE") {
       return reply.status(403).send({
         message: "Not authorized",
       });
@@ -17,70 +17,54 @@ export class TagController {
 
     const body = validateWithZod(schemas.tagCore)(request.body);
 
-    try {
-      const { id } = request.params;
-      if (!id) {
-        return reply.status(400).send({
-          message: "Missing ID param",
-        });
-      }
-
-      const tag = await TagService.addTag(request.user.id, {
-        post_id_id: id,
-        ...body,
-      });
-
-      await validateWithZod(schemas.createTagResponseSchema)(tag);
-
-      return reply.status(201).send(tag);
-    } catch (error: any) {
-      console.error(error);
-      reply.status(500).send({
-        message: "Internal Server Error",
-        error: error,
+    const { id } = request.params;
+    if (!id) {
+      return reply.status(400).send({
+        message: "Missing ID param",
       });
     }
+
+    const tag = await TagService.addTag(request.user.id, {
+      post_id_id: id,
+      ...body,
+    });
+
+    await validateWithZod(schemas.createTagResponseSchema)(tag);
+
+    return reply.status(201).send(tag);
   }
 
   static async listHandler(
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply
   ) {
-    try {
-      const { id } = request.params;
+    const { id } = request.params;
 
-      if (!id) {
-        return reply.status(400).send({
-          message: "Missing ID param",
-        });
-      }
-
-      await redis.connect();
-      const cacheKey = `posts-${id}-tags-cached`;
-      const cached = await redis.get(cacheKey);
-
-      if (cached) {
-        return reply.status(200).send(JSON.parse(cached));
-      }
-
-      const tags = await TagService.find(id);
-
-      if (!tags || tags.length === 0) {
-        return reply.status(404).send({
-          message: "No tag found for this post",
-        });
-      }
-
-      await redis.set(cacheKey, JSON.stringify(tags), 3600);
-
-      return reply.status(200).send(tags);
-    } catch (error: any) {
-      console.error(error);
-      reply.status(500).send({
-        message: "Internal Server Error",
-        error: error.message || error,
+    if (!id) {
+      return reply.status(400).send({
+        message: "Missing ID param",
       });
     }
+
+    await redis.connect();
+    const cacheKey = `posts-${id}-tags-cached`;
+    const cached = await redis.get(cacheKey);
+
+    if (cached) {
+      return reply.status(200).send(JSON.parse(cached));
+    }
+
+    const tags = await TagService.find(id);
+
+    if (!tags || tags.length === 0) {
+      return reply.status(404).send({
+        message: "No tag found for this post",
+      });
+    }
+
+    await redis.set(cacheKey, JSON.stringify(tags), 3600);
+
+    return reply.status(200).send(tags);
   }
 
   static async getHandler(
@@ -101,30 +85,21 @@ export class TagController {
       });
     }
 
-    try {
+    await redis.connect();
+    const cacheKey = `posts-${id}-tags:${tagId}`;
+    const cached = await redis.get(cacheKey);
 
-      await redis.connect();
-      const cacheKey = `posts-${id}-tags:${tagId}`;
-      const cached = await redis.get(cacheKey);
-
-      if (cached) {
-        return reply.status(200).send(JSON.parse(cached));
-      }
-
-      const tag = await TagService.findOne(id, tagId);
-
-      await validateWithZod(schemas.createTagResponseSchema)(tag);
-
-      await redis.set(cacheKey, JSON.stringify(tag), 3600);
-
-      return reply.status(200).send(tag);
-    } catch (error: any) {
-      console.error(error);
-      reply.status(500).send({
-        message: "Internal Server Error",
-        error: error,
-      });
+    if (cached) {
+      return reply.status(200).send(JSON.parse(cached));
     }
+
+    const tag = await TagService.findOne(id, tagId);
+
+    await validateWithZod(schemas.createTagResponseSchema)(tag);
+
+    await redis.set(cacheKey, JSON.stringify(tag), 3600);
+
+    return reply.status(200).send(tag);
   }
 
   static async deleteHandler(
@@ -151,19 +126,11 @@ export class TagController {
       });
     }
 
-    try {
-      await TagService.removeTag(request.user.id, {
-        post_id: id,
-        tag_id: tagId,
-      });
+    await TagService.removeTag(request.user.id, {
+      post_id: id,
+      tag_id: tagId,
+    });
 
-      return reply.status(204).send();
-    } catch (error: any) {
-      console.error(error);
-      reply.status(500).send({
-        message: "Internal Server Error",
-        error: error,
-      });
-    }
+    return reply.status(204).send();
   }
 }

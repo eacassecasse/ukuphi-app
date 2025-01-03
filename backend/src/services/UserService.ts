@@ -1,6 +1,7 @@
 import { CreateUserInput, UpdateUserInput } from "../inputs/user.schema";
 import { db } from "../lib/prisma";
 import { redis } from "../lib/redis";
+import BusinessError, { NotFoundError } from "../models/errors";
 import { hashPassword } from "../utils/bcrypt";
 import { sendOTP } from "../utils/otp";
 import { generate6DigitsNumber } from "../utils/utils";
@@ -14,7 +15,7 @@ export class UserService {
     });
 
     if (!user) {
-      throw new Error("User not found");
+      throw new NotFoundError("User not found");
     }
 
     return user;
@@ -28,7 +29,7 @@ export class UserService {
     });
 
     if (!user) {
-      throw new Error("User not found");
+      throw new NotFoundError("User not found");
     }
 
     return user;
@@ -46,7 +47,7 @@ export class UserService {
     });
 
     if (dbUser) {
-      throw new Error("User already exists");
+      throw new BusinessError("User already exists");
     }
 
     const user = await db.user.create({
@@ -63,7 +64,7 @@ export class UserService {
       where: { id: input.id },
     });
     if (!dbUser) {
-      throw new Error("User not found");
+      throw new NotFoundError("User not found");
     }
 
     const updatedData: Partial<typeof dbUser> = {
@@ -93,7 +94,7 @@ export class UserService {
     });
 
     if (!user) {
-      throw new Error("User not found");
+      throw new NotFoundError("User not found");
     }
 
     return user;
@@ -107,7 +108,7 @@ export class UserService {
     });
 
     if (!user) {
-      throw new Error("User not found");
+      throw new NotFoundError("User not found");
     }
 
     await db.user.delete({

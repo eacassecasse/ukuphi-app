@@ -1,9 +1,9 @@
 import {
-  CreateEventCommentInput,
   CreatePostCommentInput,
 } from "../inputs/comment.schema";
 import { CreatePostInput, UpdatePostInput } from "../inputs/post.schema";
 import { db } from "../lib/prisma";
+import { NotFoundError } from "../models/errors";
 import { UserService } from "./UserService";
 
 export class PostService {
@@ -11,7 +11,7 @@ export class PostService {
     const posts = await db.post.findMany({});
 
     if (posts.length === 0) {
-      throw new Error("No post found");
+      throw new NotFoundError("No post found");
     }
 
     return posts;
@@ -27,7 +27,7 @@ export class PostService {
     });
 
     if (posts.length === 0) {
-      throw new Error("No posts found for the author");
+      throw new NotFoundError("No posts found for the author");
     }
 
     return posts;
@@ -53,7 +53,7 @@ export class PostService {
     });
 
     if (!post) {
-      throw new Error("Post not found");
+      throw new NotFoundError("Post not found");
     }
 
     return post;
@@ -97,7 +97,7 @@ export class PostService {
     });
 
     if (!dbPost) {
-      throw new Error("Post not found");
+      throw new NotFoundError("Post not found");
     }
 
     const updatedData: Partial<typeof dbPost> = {
@@ -139,7 +139,7 @@ export class PostService {
     });
 
     if (!post) {
-      throw new Error("Post not found");
+      throw new NotFoundError("Post not found");
     }
 
     await db.post.delete({
@@ -198,7 +198,7 @@ export class PostService {
     });
 
     if (comments.length === 0) {
-      throw new Error("No comments found");
+      throw new NotFoundError("No comments found");
     }
 
     return comments;
