@@ -98,7 +98,7 @@ export class UserService {
       ...(input.password
         ? { password: await hashPassword(input.password) }
         : {}),
-      ...(input.role ? { role: input.role } : {}),
+      ...(input.role ? { role: input.role.toLocaleUpperCase() } : {}),
     };
 
     const user = await db.user.update({
