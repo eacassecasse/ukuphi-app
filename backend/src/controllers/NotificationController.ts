@@ -8,34 +8,26 @@ export class NotificationController {
   static async listHandler(request: FastifyRequest, reply: FastifyReply) {
     const user = request.user;
 
-    try {
-      await redis.connect();
+    await redis.connect();
 
-      const cacheKey = `user-${request.user.id}-notifications`;
-      const cached = await redis.get(cacheKey);
+    const cacheKey = `user-${request.user.id}-notifications`;
+    const cached = await redis.get(cacheKey);
 
-      if (cached) {
-        return reply.status(200).send(JSON.parse(cached));
-      }
+    if (cached) {
+      return reply.status(200).send(JSON.parse(cached));
+    }
 
-      const notifications = await NotificationService.find(request.user.id);
+    const notifications = await NotificationService.find(request.user.id);
 
-      if (!notifications || notifications.length === 0) {
-        return reply.status(404).send({
-          message: "No notifications found",
-        });
-      }
-
-      await redis.set(cacheKey, JSON.stringify(notifications), 3600);
-
-      return reply.status(200).send(notifications);
-    } catch (error: any) {
-      console.error(error);
-      reply.status(500).send({
-        message: "Internal Server Error",
-        error: error.message || error,
+    if (!notifications || notifications.length === 0) {
+      return reply.status(404).send({
+        message: "No notifications found",
       });
     }
+
+    await redis.set(cacheKey, JSON.stringify(notifications), 3600);
+
+    return reply.status(200).send(notifications);
   }
 
   static async updateHandler(
@@ -50,22 +42,14 @@ export class NotificationController {
       });
     }
 
-    try {
-      const notification = await NotificationService.update(request.user.id, {
-        id,
-      });
+    const notification = await NotificationService.update(request.user.id, {
+      id,
+    });
 
-      await validateWithZod(schemas.createNotificationResponseSchema)(
-        notification
-      );
+    await validateWithZod(schemas.createNotificationResponseSchema)(
+      notification
+    );
 
-      return reply.status(200).send(notification);
-    } catch (error: any) {
-      console.error(error);
-      reply.status(500).send({
-        message: "Internal Server Error",
-        error: error,
-      });
-    }
+    return reply.status(200).send(notification);
   }
 }

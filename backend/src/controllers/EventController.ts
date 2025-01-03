@@ -7,7 +7,10 @@ import {
   UpdateEventInput,
 } from "../inputs/event.schema";
 import { validateWithZod } from "../utils/validation.zod";
-import { schemas as commentSchema, CreateCommentInput } from "../inputs/comment.schema";
+import {
+  schemas as commentSchema,
+  CreateCommentInput,
+} from "../inputs/comment.schema";
 import { redis } from "../lib/redis";
 
 export class EventController {
@@ -29,8 +32,7 @@ export class EventController {
       const response: CreateEventResponse = {
         ...event,
         date: event.date.toISOString().replace("T", " ").split(".")[0],
-      }
-
+      };
 
       return reply.status(201).send(response);
     } catch (error: any) {
@@ -43,43 +45,34 @@ export class EventController {
   }
 
   static async listHandler(request: FastifyRequest, reply: FastifyReply) {
-    const user = request.user
+    const user = request.user;
 
-    try {
-      await redis.connect();
+    await redis.connect();
 
-      const cacheKey = 'events-cached';
-      const cached = await redis.get(cacheKey);
+    const cacheKey = "events-cached";
+    const cached = await redis.get(cacheKey);
 
-      if (cached) {
-        return reply.status(200).send(JSON.parse(cached));
-      }
+    if (cached) {
+      return reply.status(200).send(JSON.parse(cached));
+    }
 
-      const events = await EventService.find();
+    const events = await EventService.find();
 
-      if (!events || events.length === 0) {
-        return reply.status(404).send({
-          message: "No events found",
-        });
-      }
-
-      await redis.set(cacheKey, JSON.stringify(events),  3600);
-
-      return reply.status(200).send(events);
-    } catch (error: any) {
-      console.error(error);
-      reply.status(500).send({
-        message: "Internal Server Error",
-        error: error.message || error,
+    if (!events || events.length === 0) {
+      return reply.status(404).send({
+        message: "No events found",
       });
     }
+
+    await redis.set(cacheKey, JSON.stringify(events), 3600);
+
+    return reply.status(200).send(events);
   }
 
   static async getHandler(
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply
   ) {
-
     const { id } = request.params;
 
     if (!id) {
@@ -88,34 +81,25 @@ export class EventController {
       });
     }
 
-    try {
+    await redis.connect();
 
-      await redis.connect();
+    const cacheKey = `events:${id}`;
 
-      const cacheKey = `events:${id}`;
+    const cached = await redis.get(cacheKey);
 
-      const cached = await redis.get(cacheKey);
-
-      if (cached) {
-        return reply.status(200).send(JSON.parse(cached));
-      }
-      const event = await EventService.findOne(id);
-
-      const response: CreateEventResponse = {
-        ...event,
-        date: event.date.toISOString().replace("T", " ").split(".")[0],
-      }
-
-      await redis.set(cacheKey, JSON.stringify(response), 3600);
-
-      return reply.status(200).send(response);
-    } catch (error: any) {
-      console.error(error);
-      reply.status(500).send({
-        message: "Internal Server Error",
-        error: error,
-      });
+    if (cached) {
+      return reply.status(200).send(JSON.parse(cached));
     }
+    const event = await EventService.findOne(id);
+
+    const response: CreateEventResponse = {
+      ...event,
+      date: event.date.toISOString().replace("T", " ").split(".")[0],
+    };
+
+    await redis.set(cacheKey, JSON.stringify(response), 3600);
+
+    return reply.status(200).send(response);
   }
 
   static async updateHandler(
@@ -138,28 +122,19 @@ export class EventController {
 
     const body = validateWithZod(schemas.createEventSchema)(request.body);
 
-    try {
+    const input = {
+      id,
+      ...body,
+    };
 
-      const input = {
-        id,
-        ...body
-      }
+    const event = await EventService.updateEvent(request.user.id, input);
 
-      const event = await EventService.updateEvent(request.user.id, input);
+    const response: CreateEventResponse = {
+      ...event,
+      date: event.date.toISOString().replace("T", " ").split(".")[0],
+    };
 
-      const response: CreateEventResponse = {
-        ...event,
-        date: event.date.toISOString().replace("T", " ").split(".")[0],
-      }
-
-      return reply.status(200).send(response);
-    } catch (error: any) {
-      console.error(error);
-      reply.status(500).send({
-        message: "Internal Server Error",
-        error: error,
-      });
-    }
+    return reply.status(200).send(response);
   }
 
   static async deleteHandler(
@@ -180,81 +155,62 @@ export class EventController {
       });
     }
 
-    try {
-      await EventService.deleteEvent(request.user.id, id);
+    await EventService.deleteEvent(request.user.id, id);
 
-      return reply.status(204).send();
-    } catch (error: any) {
-      console.error(error);
-      reply.status(500).send({
-        message: "Internal Server Error",
-        error: error,
-      });
-    }
+    return reply.status(204).send();
   }
 
   static async commentHandler(
-      request: FastifyRequest<{ Params: {id: string}; Body: CreateCommentInput }>,
-      reply: FastifyReply
-    ) {
-  
-      const body = validateWithZod(commentSchema.createCommentSchema)(request.body);
-  
-      try {
-        const { id } = request.params
-        if (!id) {
-          return reply.status(400).send({
-            message: "Missing ID param"
-          })
-        }
+    request: FastifyRequest<{
+      Params: { id: string };
+      Body: CreateCommentInput;
+    }>,
+    reply: FastifyReply
+  ) {
+    const body = validateWithZod(commentSchema.createCommentSchema)(
+      request.body
+    );
 
-        const input = {
-          event_id: id,
-          ...body
-        }
-  
-        const comment = await EventService.comment(request.user.id, input);
-  
-        await validateWithZod(commentSchema.createEventCommentResponseSchema)(comment);
-  
-  
-        return reply.status(201).send(comment);
-      } catch (error: any) {
-        console.error(error);
-        reply.status(500).send({
-          message: "Internal Server Error",
-          error: error,
-        });
-      }
+    const { id } = request.params;
+    if (!id) {
+      return reply.status(400).send({
+        message: "Missing ID param",
+      });
     }
-  
-    static async listCommentsHandler(
-      request: FastifyRequest<{ Params: { id: string }}>,
-      reply: FastifyReply) {
-  
-      try {
-        const { id } = request.params
-  
-        if (!id) {
-          return reply.status(400).send({
-            message: "Missing ID param"
-          })
-        }
-        const comments = await EventService.listComments(id);
-  
-        if (!comments || comments.length === 0) {
-          return reply.status(404).send({
-            message: "No comment found for this event",
-          });
-        }
-  
-        return reply.status(200).send(comments);
-      } catch (error: any) {
-        console.error(error);
-        reply.status(500).send({
-          message: "Internal Server Error",
-          error: error.message || error,
-        });
-      }
+
+    const input = {
+      event_id: id,
+      ...body,
+    };
+
+    const comment = await EventService.comment(request.user.id, input);
+
+    await validateWithZod(commentSchema.createEventCommentResponseSchema)(
+      comment
+    );
+
+    return reply.status(201).send(comment);
+  }
+
+  static async listCommentsHandler(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply
+  ) {
+    const { id } = request.params;
+
+    if (!id) {
+      return reply.status(400).send({
+        message: "Missing ID param",
+      });
     }
+    const comments = await EventService.listComments(id);
+
+    if (!comments || comments.length === 0) {
+      return reply.status(404).send({
+        message: "No comment found for this event",
+      });
+    }
+
+    return reply.status(200).send(comments);
+  }
 }

@@ -3,6 +3,7 @@ import { CreatePaymentInput } from "../inputs/payment.schema";
 import { CreateTicketInput, UpdateTicketInput } from "../inputs/ticket.schema";
 import { db } from "../lib/prisma";
 import { EventService } from "./EventService";
+import { NotFoundError } from "../models/errors";
 
 export class TicketService {
   static async find(eventId: string) {
@@ -13,7 +14,7 @@ export class TicketService {
     });
 
     if (tickets.length === 0) {
-      throw new Error("No tickets found");
+      throw new NotFoundError("No tickets found");
     }
 
     return tickets;
@@ -46,7 +47,7 @@ export class TicketService {
     });
 
     if (!ticket) {
-      throw new Error("Ticket not found");
+      throw new NotFoundError("Ticket not found");
     }
 
     return ticket;
@@ -63,7 +64,7 @@ export class TicketService {
     });
 
     if (!event) {
-      throw new Error("Event not found");
+      throw new NotFoundError("Event not found");
     }
 
     const ticket = await db.ticket.create({
@@ -102,7 +103,7 @@ export class TicketService {
     });
 
     if (!event) {
-      throw new Error("Event not found");
+      throw new NotFoundError("Event not found");
     }
 
     await TicketService.findOne(event.id, id);
@@ -147,7 +148,7 @@ export class TicketService {
     });
 
     if (!event) {
-      throw new Error("Event not found");
+      throw new NotFoundError("Event not found");
     }
 
     await db.ticket.delete({
@@ -165,7 +166,7 @@ export class TicketService {
     });
 
     if (!ticket) {
-      throw new Error("Ticket not found.");
+      throw new NotFoundError("Ticket not found.");
     }
 
     const isPaid = await db.payment.findUnique({
@@ -242,7 +243,7 @@ export class TicketService {
     });
 
     if (!payment) {
-      throw new Error("Ticket purchase not found");
+      throw new NotFoundError("Ticket purchase not made yet");
     }
 
     return payment;

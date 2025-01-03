@@ -1,8 +1,8 @@
 import {
   CreateNotificationInput,
-  UpdateNotificationInput,
 } from "../inputs/notification.schema";
 import { db } from "../lib/prisma";
+import { NotFoundError } from "../models/errors";
 import { UserService } from "./UserService";
 
 export class NotificationService {
@@ -28,7 +28,7 @@ export class NotificationService {
     });
 
     if (notifications.length === 0) {
-      throw new Error("No notifications found for this user");
+      throw new NotFoundError("No notifications found for this user");
     }
 
     return notifications;
@@ -45,7 +45,7 @@ export class NotificationService {
     });
 
     if (!dbNotification) {
-      throw new Error("Notification not found");
+      throw new NotFoundError("Notification not found");
     }
 
     const notification = await db.notification.update({

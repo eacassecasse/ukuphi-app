@@ -1,6 +1,7 @@
 import { db } from "../lib/prisma";
 import { PostService } from "./PostService";
 import { CreateTagInput } from "../inputs/tag.schema";
+import { NotFoundError } from "../models/errors";
 
 export class TagService {
   static async find(postId: string) {
@@ -11,7 +12,7 @@ export class TagService {
     });
 
     if (tags.length === 0) {
-      throw new Error("No tags found");
+      throw new NotFoundError("No tags found");
     }
 
     return tags;
@@ -42,7 +43,7 @@ export class TagService {
     });
 
     if (!tag) {
-      throw new Error("Tag not found");
+      throw new NotFoundError("Tag not found");
     }
 
     return tag;
@@ -59,7 +60,7 @@ export class TagService {
     });
 
     if (!post) {
-      throw new Error("Post not found");
+      throw new NotFoundError("Post not found");
     }
 
     const tag = await db.tag.create({
@@ -96,7 +97,7 @@ export class TagService {
     });
 
     if (!post) {
-      throw new Error("Post not found");
+      throw new NotFoundError("Post not found");
     }
 
     await db.tag.delete({

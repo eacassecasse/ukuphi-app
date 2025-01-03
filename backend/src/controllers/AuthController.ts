@@ -12,50 +12,42 @@ export class AuthController {
   ) {
     const body = request.body;
 
-    try {
-      const user = await UserService.findUserByEmail(body.email);
+    const user = await UserService.findUserByEmail(body.email);
 
-      if (!user) {
-        return reply.status(401).send({
-          message: "Invalid email address. Try again!",
-        });
-      }
-
-      const isValidPassword = verifyPassword({
-        candidatePassword: body.password,
-        hash: user.password,
-      });
-
-      if (!isValidPassword) {
-        return reply.status(401).send({
-          message: "Password is incorrect",
-        });
-      }
-
-      const payload = {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      };
-
-      const token = request.jwt.sign(payload, { expiresIn: "15m" });
-
-      const refreshToken = await generateRefreshToken(request, payload);
-
-      reply.setCookie("refresh_token", refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "strict",
-      });
-
-      return { accessToken: token, refreshToken };
-    } catch (error: any) {
-      console.error(error);
-      reply.status(500).send({
-        message: "Internal Server Error",
-        error: error,
+    if (!user) {
+      return reply.status(401).send({
+        message: "Invalid email address. Try again!",
       });
     }
+
+    const isValidPassword = verifyPassword({
+      candidatePassword: body.password,
+      hash: user.password,
+    });
+
+    if (!isValidPassword) {
+      return reply.status(401).send({
+        message: "Password is incorrect",
+      });
+    }
+
+    const payload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const token = request.jwt.sign(payload, { expiresIn: "15m" });
+
+    const refreshToken = await generateRefreshToken(request, payload);
+
+    reply.setCookie("refresh_token", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+
+    return { accessToken: token, refreshToken };
   }
 
   static async refreshTokenHandler(
@@ -72,28 +64,21 @@ export class AuthController {
 
     const decoded = await fastify().jwt.verify(refreshToken);
 
-    try {
-      const newAccessToken = request.jwt.sign(decoded, { expiresIn: "15m" });
-      const newRefreshToken = await generateRefreshToken(
-        request,
-        decoded as FastifyJWT["user"]
-      );
+    const newAccessToken = request.jwt.sign(decoded, { expiresIn: "15m" });
+    const newRefreshToken = await generateRefreshToken(
+      request,
+      decoded as FastifyJWT["user"]
+    );
 
-      reply.setCookie("refresh_token", newRefreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "strict",
-      });
+    reply.setCookie("refresh_token", newRefreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
 
-      return { accessToken: newAccessToken, refreshToken };
-    } catch (error: any) {
-      console.error(error);
-      reply.status(500).send({
-        message: "Internal Server Error",
-        error: error,
-      });
-    }
+    return { accessToken: newAccessToken, refreshToken };
   }
+
   static async logoutHandler(request: FastifyRequest, reply: FastifyReply) {
     reply.clearCookie("access_token");
     reply.clearCookie("refresh_token");

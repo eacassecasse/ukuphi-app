@@ -1,6 +1,7 @@
 import { CreateEventCommentInput } from "../inputs/comment.schema";
 import { CreateEventInput, UpdateEventInput } from "../inputs/event.schema";
 import { db } from "../lib/prisma";
+import { NotFoundError } from "../models/errors";
 import { UserService } from "./UserService";
 
 export class EventService {
@@ -8,7 +9,7 @@ export class EventService {
     const events = await db.event.findMany({});
 
     if (events.length === 0) {
-      throw new Error("No events found");
+      throw new NotFoundError("No events found");
     }
 
     return events;
@@ -24,7 +25,7 @@ export class EventService {
     });
 
     if (events.length === 0) {
-      throw new Error("No events found for the organizer");
+      throw new NotFoundError("No events found for the organizer");
     }
 
     return events;
@@ -46,7 +47,7 @@ export class EventService {
     });
 
     if (!event) {
-      throw new Error("Event not found");
+      throw new NotFoundError("Event not found");
     }
 
     return event;
@@ -77,7 +78,7 @@ export class EventService {
     });
 
     if (!dbEvent) {
-      throw new Error("Event not found");
+      throw new NotFoundError("Event not found");
     }
 
     const updatedData: Partial<typeof dbEvent> = {
@@ -105,7 +106,7 @@ export class EventService {
     });
 
     if (!event) {
-      throw new Error("Event not found");
+      throw new NotFoundError("Event not found");
     }
 
     await db.event.delete({
@@ -164,7 +165,7 @@ export class EventService {
     });
 
     if (comments.length === 0) {
-      throw new Error("No comments found");
+      throw new NotFoundError("No comments found");
     }
 
     return comments;
