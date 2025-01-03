@@ -18,14 +18,22 @@ services:
     volumes:
       - ./backend:/app
     environment:
-      - DATABASE_URL:postgres://eacassecasse:@Pas1sword23@database:5432/ukuphi_db
+      - DATABASE_URL:postgres://ukuphi_usr:@ukuphi_pwd@database:5432/ukuphi_db
       - NODE_ENV=development
+    networks:
+      - postgres-network
 
   database:
     image: postgres:15
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: eacassecasse
-      POSTGRES_PASSWORD: @Pas1sword23
+      POSTGRES_USER: ukuphi_usr
+      POSTGRES_PASSWORD: ukuphi_pwd
       POSTGRES_DB: ukuphi_db
+    networks:
+      - postgres-network
+
+networks:
+  postgres-network:
+    driver: bridge
