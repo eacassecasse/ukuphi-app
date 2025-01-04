@@ -183,12 +183,10 @@ export class UserService {
     await redis.connect();
     await redis.set(`otp:${user.id}`, otp, ttl);
 
-    const target = user.phone || user.email;
-    const method = user.phone ? "phone" : "email";
+    const target = user.email || user.phone;
+    const method = user.email ? "email" : "phone";
 
     await sendOTP(target, otp, method);
-
-    return otp; // Just for Testing, remove in production
   }
 
   static async verifyOTP(userId: string, otp: string) {
@@ -196,9 +194,16 @@ export class UserService {
     const storedOtp = await redis.get(otpKey);
 
     if (!storedOtp || storedOtp !== otp) {
-      return false;
+      throw new BusinessError("Invalid OTP");
     }
 
+    const user = await db.user.update({
+      where: { id: userId },
+      data: { verified: true },
+    });
+
     await redis.delete(otpKey); // Remove the OTP after successful verification
+
+    return user;
   }
 }

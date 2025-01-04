@@ -53,7 +53,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     AuthController.refreshTokenHandler
   );
 
-  fastify.post("/verify-otp", UserController.registerHandler);
+  fastify.post("/verify-otp", UserController.verifyOTPHandler);
 
   fastify.delete(
     "/logout",

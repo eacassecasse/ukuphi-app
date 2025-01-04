@@ -1,14 +1,23 @@
 import { createClient, RedisClientType } from "redis";
 
 class Redis {
-  static instance: Redis | null = null;
+  private static instance: Redis | null = null;
   #client: RedisClientType;
+  private isConnected = false;
 
   private constructor() {
     this.#client = createClient();
 
     this.#client.on("error", (err) => {
-      console.error("Redis Client Error:", err);
+      throw err;
+    });
+
+    this.#client.on("ready", () => {
+      this.isConnected = true;
+    });
+
+    this.#client.on("end", () => {
+      this.isConnected = false;
     });
   }
 
@@ -21,12 +30,12 @@ class Redis {
   }
 
   async connect() {
-    try {
-      await this.#client.connect();
-      console.log("Connected successfully to Redis!");
-    } catch (err) {
-      console.error("Failed to connect to Redis:", err);
-      throw new Error("Redis connection failed");
+    if (!this.isConnected) {
+      try {
+        await this.#client.connect();
+      } catch (err) {
+        throw new Error("Redis connection failed");
+      }
     }
   }
 
@@ -38,7 +47,6 @@ class Redis {
     try {
       await this.#client.set(key, value.toString(), { EX: duration });
     } catch (err) {
-      console.error(`Error setting key "${key}" in Redis:`, err);
       throw new Error("Redis set operation failed");
     }
   }
@@ -48,7 +56,6 @@ class Redis {
       const value = await this.#client.get(key);
       return value;
     } catch (err) {
-      console.error(`Error getting key "${key}" from Redis:`, err);
       throw new Error("Redis get operation failed");
     }
   }
@@ -57,8 +64,17 @@ class Redis {
     try {
       await this.#client.del(key);
     } catch (err) {
-      console.error(`Error deleting key "${key}" from Redis:`, err);
       throw new Error("Redis delete operation failed");
+    }
+  }
+
+  async disconnect(): Promise<void> {
+    if (this.isConnected) {
+      try {
+        await this.#client.disconnect();
+      } catch (err) {
+        throw new Error("Redis disconnection failed");
+      }
     }
   }
 }

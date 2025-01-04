@@ -6,9 +6,11 @@ import rateLimit from "fastify-rate-limiter";
 import { authenticate } from "./plugins/authenticate";
 import { routes } from "./routes";
 import { registerErrorHandler } from "./plugins/errorHandler";
+import fastifyMail from "@autotelic/fastify-mail";
+import { NODEMAILER_TRANSPORTER } from "./lib/nodemailer";
+import handlebars from "handlebars";
 
-
-const fastify = Fastify({
+export const fastify = Fastify({
   logger: true,
 });
 
@@ -27,6 +29,8 @@ async function bootstrap() {
         expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION,
       },
     });
+
+    //Email
     fastify.decorate("authenticate", authenticate);
     fastify.addHook("preHandler", (req, res, next) => {
       req.jwt = fastify.jwt;
@@ -44,7 +48,7 @@ async function bootstrap() {
     });
 
     //Routes
-    fastify.register(routes, { prefix: "/api/v1"})  
+    fastify.register(routes, { prefix: "/api/v1" });
 
     await fastify.listen({
       port: 5000,

@@ -9,6 +9,7 @@ import {
 } from "../inputs/user.schema";
 import { db } from "../lib/prisma";
 import { NotificationService } from "../services/NotificationService";
+import { sendMail } from "../lib/nodemailer";
 
 export class UserController {
   static async registerHandler(
@@ -21,18 +22,10 @@ export class UserController {
 
     validateWithZod(schemas.createUserResponseSchema)(user);
 
-    const otp = await UserService.generateAndSendOTP({
+    await UserService.generateAndSendOTP({
       id: user.id,
       email: user.email,
       phone: user.phone || "",
-    });
-
-    console.log(`This OTP: ${otp} was send to the user`);
-
-    await NotificationService.create(user.id, {
-      message: `Welcome to Ukuphi App! We are glad to have you aboard`,
-      type: "INFO",
-      status: "UNREAD",
     });
 
     return reply.status(201).send(user);
@@ -61,21 +54,16 @@ export class UserController {
   ) {
     const { userId, otp } = request.body;
 
-    const isValid = await UserService.verifyOTP(userId, otp);
+    const user = await UserService.verifyOTP(userId, otp);
 
-    if (!isValid) {
-      return reply.status(400).send({ message: "Invalid OTP" });
-    }
-
-    await db.user.update({
-      where: { id: userId },
-      data: { verified: true },
-    });
-
-    await NotificationService.create(userId, {
+    await NotificationService.create(user.id, {
       message: "Your profile was successfully updated",
       type: "INFO",
-      status: "UNREAD"
+      status: "UNREAD",
+    });
+
+    await sendMail(user.email, "Welcome Aboard! Your Account is Successfully Verified", "verification", {
+      userName: user.name
     });
 
     return reply.status(200).send({ message: "OTP verified successfully" });

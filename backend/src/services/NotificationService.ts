@@ -1,6 +1,6 @@
 import { CreateNotificationInput } from "../inputs/notification.schema";
 import { db } from "../lib/prisma";
-import { NotFoundError } from "../models/errors";
+import BusinessError, { NotFoundError } from "../models/errors";
 import { UserService } from "./UserService";
 
 export class NotificationService {
@@ -39,7 +39,7 @@ export class NotificationService {
   static async update(userId: string, input: { id: string }) {
     const { id } = input;
 
-    const dbNotification = await db.notification.findFirst({
+    const dbNotification = await db.notification.findUnique({
       where: {
         id: id,
         userId: userId,
@@ -50,6 +50,10 @@ export class NotificationService {
       throw new NotFoundError("Notification not found");
     }
 
+    if (dbNotification.status === 'READ') {
+      throw new BusinessError("This notification has been read already.");
+    }
+
     const notification = await db.notification.update({
       where: {
         id: dbNotification.id,
@@ -58,6 +62,20 @@ export class NotificationService {
       data: {
         status: "READ",
       },
+      select: {
+        id: true,
+        type: true,
+        message: true,
+        sentAt: true,
+        status: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          }
+        }
+      }
     });
 
     return notification;
