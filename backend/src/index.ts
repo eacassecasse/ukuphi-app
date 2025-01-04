@@ -6,7 +6,6 @@ import rateLimit from "fastify-rate-limiter";
 import { authenticate } from "./plugins/authenticate";
 import { routes } from "./routes";
 import { registerErrorHandler } from "./plugins/errorHandler";
-import './plugins/'
 
 
 const fastify = Fastify({
@@ -23,9 +22,9 @@ async function bootstrap() {
   try {
     fastify.register(cors, { origin: true });
     fastify.register(fjwt, {
-      secret: process.env.JWT_SECRET || "ukuphi-app-jwt",
+      secret: process.env.JWT_ACCESS_TOKEN_SECRET || "ukuphi-app-jwt",
       sign: {
-        expiresIn: "15m",
+        expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION,
       },
     });
     fastify.decorate("authenticate", authenticate);

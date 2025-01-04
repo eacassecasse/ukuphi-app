@@ -1,21 +1,23 @@
-import {
-  CreateNotificationInput,
-} from "../inputs/notification.schema";
+import { CreateNotificationInput } from "../inputs/notification.schema";
 import { db } from "../lib/prisma";
 import { NotFoundError } from "../models/errors";
 import { UserService } from "./UserService";
 
 export class NotificationService {
   static async create(userId: string, input: CreateNotificationInput) {
-    const notification = await db.notification.create({
-      data: {
-        ...input,
-        sentAt: new Date(),
-        userId,
-      },
-    });
+    try {
+      const notification = await db.notification.create({
+        data: {
+          ...input,
+          sentAt: new Date(),
+          userId,
+        },
+      });
 
-    return notification;
+      return notification;
+    } catch (error) {
+      throw new Error("Failed to create a notification");
+    }
   }
 
   static async find(id: string) {

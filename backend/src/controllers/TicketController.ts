@@ -1,13 +1,18 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { EventService } from "../services/EventService";
 import { validateWithZod } from "../utils/validation.zod";
-import { CreateTicketInput, schemas, UpdateTicketBody } from "../inputs/ticket.schema";
+import {
+  CreateTicketInput,
+  schemas,
+  UpdateTicketBody,
+} from "../inputs/ticket.schema";
 import { TicketService } from "../services/TicketService";
 import {
   CreatePaymentInput,
   schemas as paymentSchema,
 } from "../inputs/payment.schema";
 import { redis } from "../lib/redis";
+import { NotificationService } from "../services/NotificationService";
 
 export class TicketController {
   static async registerHandler(
@@ -38,6 +43,12 @@ export class TicketController {
     });
 
     await validateWithZod(schemas.createTicketResponseSchema)(ticket);
+
+    await NotificationService.create(request.user.id, {
+      message: `A new ticket ${ticket.id} was successfully created for Event ${ticket.event.id}.`,
+      type: "INFO",
+      status: "UNREAD",
+    });
 
     return reply.status(201).send(ticket);
   }
@@ -148,6 +159,12 @@ export class TicketController {
 
     await validateWithZod(schemas.createTicketResponseSchema)(ticket);
 
+    await NotificationService.create(request.user.id, {
+      message: `Ticket ${ticket.id} was successfully updated.`,
+      type: "INFO",
+      status: "UNREAD",
+    });
+
     return reply.status(200).send(ticket);
   }
 
@@ -180,6 +197,12 @@ export class TicketController {
       ticket_id: ticketId,
     });
 
+    await NotificationService.create(request.user.id, {
+      message: `Ticket ${id} was successfully deleted.`,
+      type: "WARNING",
+      status: "UNREAD",
+    });
+
     return reply.status(204).send();
   }
 
@@ -206,6 +229,12 @@ export class TicketController {
     });
 
     await validateWithZod(paymentSchema.createPaymentResponseSchema)(payment);
+
+    await NotificationService.create(request.user.id, {
+      message: `Ticket ${id} was successfully purchased.`,
+      type: "INFO",
+      status: "UNREAD",
+    });
 
     return reply.status(201).send(payment);
   }

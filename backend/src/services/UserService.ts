@@ -78,6 +78,16 @@ export class UserService {
       },
     });
 
+    await db.notification.create({
+      data: {
+        message: "Welcome to Ukuphi App! We're glad to have you.",
+        type: "WELCOME",
+        status: "UNREAD",
+        userId: user.id,
+        sentAt: new Date(),
+      },
+    });
+
     return user;
   }
 
@@ -111,6 +121,16 @@ export class UserService {
         phone: true,
         role: true,
         verified: true,
+      },
+    });
+
+    await db.notification.create({
+      data: {
+        message: "Your profile has been successfully update.",
+        type: "UPDATE",
+        status: "UNREAD",
+        userId: user.id,
+        sentAt: new Date(),
       },
     });
 

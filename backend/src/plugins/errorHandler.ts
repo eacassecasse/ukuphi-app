@@ -37,7 +37,6 @@ export const registerErrorHandler = (app: FastifyInstance) => {
       });
 
       reply.status(statusCode).send({
-        error: errorName,
         message: error.message,
       });
     }

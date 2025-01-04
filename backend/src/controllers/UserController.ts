@@ -8,6 +8,7 @@ import {
   UpdateUserInput,
 } from "../inputs/user.schema";
 import { db } from "../lib/prisma";
+import { NotificationService } from "../services/NotificationService";
 
 export class UserController {
   static async registerHandler(
@@ -27,6 +28,12 @@ export class UserController {
     });
 
     console.log(`This OTP: ${otp} was send to the user`);
+
+    await NotificationService.create(user.id, {
+      message: `Welcome to Ukuphi App! We are glad to have you aboard`,
+      type: "INFO",
+      status: "UNREAD",
+    });
 
     return reply.status(201).send(user);
   }
@@ -63,6 +70,12 @@ export class UserController {
     await db.user.update({
       where: { id: userId },
       data: { verified: true },
+    });
+
+    await NotificationService.create(userId, {
+      message: "Your profile was successfully updated",
+      type: "INFO",
+      status: "UNREAD"
     });
 
     return reply.status(200).send({ message: "OTP verified successfully" });
