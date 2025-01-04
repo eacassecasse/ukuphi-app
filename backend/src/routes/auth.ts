@@ -12,9 +12,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     {
       preHandler: [fastify.authenticate],
     },
-    async (request) => {
-      return { user: request.user };
-    }
+    UserController.getHandler
   );
 
   fastify.put(

@@ -174,22 +174,48 @@ export class TicketService {
       throw new NotFoundError("Ticket not found.");
     }
 
-    const isPaid = await db.payment.findUnique({
+    const existingPayment = await db.payment.findUnique({
       where: {
-        ticketId: ticket.id,
-        userId,
+        userId_ticketId: {
+          userId,
+          ticketId: ticket.id
+        }
       },
     });
 
     let payment = null;
 
-    if (isPaid) {
+    if (existingPayment) {
       payment = await db.payment.update({
         where: {
-          id: isPaid.id,
+          id: existingPayment.id,
         },
         data: {
-          amount: isPaid.amount + input.amount,
+          amount: existingPayment.amount + input.amount,
+        },
+
+        select: {
+          id: true,
+          amount: true,
+          method: true,
+          qr_code: true,
+          status: true,
+          created_at: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          ticket: {
+            select: {
+              id: true,
+              price: true,
+              existentQuantity: true,
+              type: true,
+            },
+          },
         },
       });
     } else {
@@ -246,8 +272,10 @@ export class TicketService {
   static async viewPayment(userId: string, ticketId: string) {
     const payment = await db.payment.findUnique({
       where: {
-        userId,
-        ticketId,
+        userId_ticketId: {
+          userId,
+          ticketId
+        }
       },
       include: {
         ticket: true,

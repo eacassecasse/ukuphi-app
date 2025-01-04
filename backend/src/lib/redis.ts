@@ -34,6 +34,7 @@ class Redis {
       try {
         await this.#client.connect();
       } catch (err) {
+        console.log(err);
         throw new Error("Redis connection failed");
       }
     }

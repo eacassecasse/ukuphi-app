@@ -1,5 +1,7 @@
 import * as z from "zod";
 
+const uuidSchema = z.string().uuid({ message: "Must be a valid UUID string" });
+
 const createCommentSchema = z.object({
   title: z.string({
     required_error: "Title is required",
@@ -9,30 +11,20 @@ const createCommentSchema = z.object({
   }),
 });
 
-
 const createEventCommentSchema = createCommentSchema.extend({
-  event_id: z
-    .string({
-      invalid_type_error: "The Event ID must be a valid UUID String",
-    })
-    .uuid(),
+  event_id: uuidSchema
 });
 
 const updateCommentSchema = createEventCommentSchema.extend({
-  id: z.string(),
+  id: uuidSchema
 });
 
 const createPostCommentSchema = createCommentSchema.extend({
-  post_id: z
-    .string({
-      invalid_type_error: "The Ppst ID must be a valid UUID String",
-    })
-    .uuid(),
+  post_id: uuidSchema
 });
 
-
 const createCommentResponseCore = createCommentSchema.extend({
-  id: z.string(),
+  id: uuidSchema,
   user: z.object({
     id: z.string(),
     name: z.string(),
@@ -52,7 +44,7 @@ const createEventCommentResponseSchema = createCommentResponseCore.extend({
 
 const createPostCommentResponseSchema = createCommentResponseCore.extend({
   post: z.object({
-    id: z.string(),
+    id: uuidSchema,
     title: z.string(),
     publishedAt: z.date(),
   }),
@@ -60,9 +52,13 @@ const createPostCommentResponseSchema = createCommentResponseCore.extend({
 
 export type CreateCommentInput = z.infer<typeof createCommentSchema>;
 export type CreateEventCommentInput = z.infer<typeof createEventCommentSchema>;
-export type CreateEventCommentResponse = z.infer<typeof createEventCommentResponseSchema>;
+export type CreateEventCommentResponse = z.infer<
+  typeof createEventCommentResponseSchema
+>;
 export type CreatePostCommentInput = z.infer<typeof createPostCommentSchema>;
-export type CreatePostCommentResponse = z.infer<typeof createPostCommentResponseSchema>;
+export type CreatePostCommentResponse = z.infer<
+  typeof createPostCommentResponseSchema
+>;
 export type UpdateEventCommentInput = z.infer<typeof updateCommentSchema>;
 
 export const schemas = {
@@ -70,5 +66,5 @@ export const schemas = {
   createEventCommentSchema,
   createEventCommentResponseSchema,
   createPostCommentSchema,
-  createPostCommentResponseSchema
+  createPostCommentResponseSchema,
 };

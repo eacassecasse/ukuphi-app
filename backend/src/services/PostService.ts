@@ -183,6 +183,17 @@ export class PostService {
             email: true,
           },
         },
+        post_comments: {
+          select: {
+            post: {
+              select: {
+                id: true,
+                title: true,
+                publishedAt: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -201,6 +212,13 @@ export class PostService {
             title: true,
             content: true,
             commentedAt: true,
+          },
+        },
+        post: {
+          select: {
+            id: true,
+            title: true,
+            publishedAt: true,
           },
         },
       },

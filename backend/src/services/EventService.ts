@@ -144,6 +144,19 @@ export class EventService {
             email: true,
           },
         },
+        event_comments: {
+          select: {
+            event: {
+              select: {
+                id: true,
+                title: true,
+                description: true,
+                location: true,
+                date: true
+              }
+            }
+          }
+        }
       },
     });
 
@@ -163,7 +176,15 @@ export class EventService {
             content: true,
             commentedAt: true,
           },
-        },
+        },event: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            location: true,
+            date: true
+          }
+        }
       },
     });
 
