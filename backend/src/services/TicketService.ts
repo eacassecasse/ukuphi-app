@@ -176,7 +176,7 @@ export class TicketService {
 
     const isPaid = await db.payment.findUnique({
       where: {
-        ticketId: ticket_id,
+        ticketId: ticket.id,
         userId,
       },
     });
@@ -230,6 +230,15 @@ export class TicketService {
         },
       });
     }
+
+    await db.ticket.update({
+      where: {
+        id: ticket.id,
+      },
+      data: {
+        existentQuantity: ticket.existentQuantity - input.amount,
+      },
+    });
 
     return payment;
   }

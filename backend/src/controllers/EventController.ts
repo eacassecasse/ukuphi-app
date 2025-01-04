@@ -13,6 +13,7 @@ import {
   CreateCommentInput,
 } from "../inputs/comment.schema";
 import { redis } from "../lib/redis";
+import { NotificationService } from "../services/NotificationService";
 
 export class EventController {
   static async registerHandler(
@@ -35,6 +36,12 @@ export class EventController {
         date: event.date.toISOString().replace("T", " ").split(".")[0],
       };
 
+      await NotificationService.create(request.user.id, {
+        message: `A new event ${event.id} was successfully created.`,
+        type: "INFO",
+        status: "UNREAD",
+      });
+
       return reply.status(201).send(response);
     } catch (error: any) {
       console.error(error);
@@ -46,7 +53,6 @@ export class EventController {
   }
 
   static async listHandler(request: FastifyRequest, reply: FastifyReply) {
-
     await redis.connect();
 
     const cacheKey = "events-cached";
@@ -134,6 +140,12 @@ export class EventController {
       date: event.date.toISOString().replace("T", " ").split(".")[0],
     };
 
+    await NotificationService.create(request.user.id, {
+      message: `Event ${event.id} was successfully updated.`,
+      type: "INFO",
+      status: "UNREAD",
+    });
+
     return reply.status(200).send(response);
   }
 
@@ -156,6 +168,12 @@ export class EventController {
     }
 
     await EventService.deleteEvent(request.user.id, id);
+
+    NotificationService.create(request.user.id, {
+      message: `Event ${id} was successfully deleted`,
+      type: "WARNING",
+      status: "UNREAD",
+    });
 
     return reply.status(204).send();
   }
@@ -188,6 +206,12 @@ export class EventController {
     await validateWithZod(commentSchema.createEventCommentResponseSchema)(
       comment
     );
+
+    await NotificationService.create(request.user.id, {
+      message: `Event ${id} has a new comment`,
+      type: "INFO",
+      status: "UNREAD",
+    });
 
     return reply.status(201).send(comment);
   }

@@ -10,9 +10,9 @@ import {
   schemas,
   CreatePostInput,
   CreatePostResponse,
-  UpdatePostInput,
   UpdatePostBody,
 } from "../inputs/post.schema";
+import { NotificationService } from "../services/NotificationService";
 
 export class PostController {
   static async createHandler(
@@ -36,6 +36,12 @@ export class PostController {
         .replace("T", " ")
         .split(".")[0],
     };
+
+    await NotificationService.create(request.user.id, {
+      message: `A new post ${post.id} was successfully created.`,
+      type: "INFO",
+      status: "UNREAD"
+    });
 
     return reply.status(201).send(response);
   }
@@ -132,6 +138,12 @@ export class PostController {
         .split(".")[0],
     };
 
+    await NotificationService.create(request.user.id, {
+      message: `Post ${post.id} was successfully updated.`,
+      type: "INFO",
+      status: "UNREAD"
+    });
+
     return reply.status(200).send(response);
   }
 
@@ -154,6 +166,12 @@ export class PostController {
     }
 
     await PostService.deletePost(request.user.id, id);
+
+    await NotificationService.create(request.user.id, {
+      message: `Post ${id} was successfully deleted.`,
+      type: "WARNING",
+      status: "UNREAD"
+    });
 
     return reply.status(204).send();
   }
@@ -186,6 +204,12 @@ export class PostController {
     await validateWithZod(commentSchema.createPostCommentResponseSchema)(
       comment
     );
+
+    await NotificationService.create(request.user.id, {
+      message: `Post ${id} has a new comment.`,
+      type: "INFO",
+      status: "UNREAD"
+    });
 
     return reply.status(201).send(comment);
   }

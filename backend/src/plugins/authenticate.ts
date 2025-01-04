@@ -39,7 +39,9 @@ export async function generateRefreshToken(
   request: FastifyRequest,
   user: FastifyJWT["user"]
 ) {
-  const refreshToken = request.jwt.sign(user, { expiresIn: "7d" });
+  const refreshToken = request.jwt.sign(user, {
+    expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRATION,
+  });
 
   return refreshToken;
 }

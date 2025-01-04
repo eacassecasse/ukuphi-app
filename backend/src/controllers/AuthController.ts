@@ -4,7 +4,7 @@ import { verifyPassword } from "../utils/bcrypt";
 import { LoginInput } from "../inputs/auth.schema";
 import { generateRefreshToken } from "../plugins/authenticate";
 import { FastifyJWT } from "@fastify/jwt";
-import { db } from "../lib/prisma";
+import { NotificationService } from "../services/NotificationService";
 
 export class AuthController {
   static async loginHandler(
@@ -38,7 +38,9 @@ export class AuthController {
       role: user.role,
     };
 
-    const token = request.jwt.sign(payload, { expiresIn: "15m" });
+    const token = request.jwt.sign(payload, {
+      expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION,
+    });
 
     const refreshToken = await generateRefreshToken(request, payload);
 
@@ -48,14 +50,10 @@ export class AuthController {
       sameSite: "strict",
     });
 
-    await db.notification.create({
-      data: {
-        message: "New login detected from a new device/location",
-        type: "LOGIN_ACTIVITY",
-        status: "UNREAD",
-        userId: user.id,
-        sentAt: new Date(),
-      },
+    await NotificationService.create(user.id, {
+      message: "New login detected from a new device/location",
+      type: "WARNING",
+      status: "UNREAD"
     });
 
     return { accessToken: token, refreshToken };
@@ -75,7 +73,9 @@ export class AuthController {
 
     const decoded = await fastify().jwt.verify(refreshToken);
 
-    const newAccessToken = request.jwt.sign(decoded, { expiresIn: "15m" });
+    const newAccessToken = request.jwt.sign(decoded, {
+      expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION,
+    });
     const newRefreshToken = await generateRefreshToken(
       request,
       decoded as FastifyJWT["user"]
