@@ -1,14 +1,23 @@
 import { createClient, RedisClientType } from "redis";
 
 class Redis {
+  static instance: Redis | null = null;
   #client: RedisClientType;
 
-  constructor() {
+  private constructor() {
     this.#client = createClient();
 
     this.#client.on("error", (err) => {
       console.error("Redis Client Error:", err);
     });
+  }
+
+  static getInstance(): Redis {
+    if (!Redis.instance) {
+      Redis.instance = new Redis();
+    }
+
+    return Redis.instance;
   }
 
   async connect() {
@@ -21,7 +30,11 @@ class Redis {
     }
   }
 
-  async set(key: string, value: string | number, duration: number): Promise<void> {
+  async set(
+    key: string,
+    value: string | number,
+    duration: number
+  ): Promise<void> {
     try {
       await this.#client.set(key, value.toString(), { EX: duration });
     } catch (err) {
@@ -50,4 +63,4 @@ class Redis {
   }
 }
 
-export const redis = new Redis();
+export const redis = Redis.getInstance();

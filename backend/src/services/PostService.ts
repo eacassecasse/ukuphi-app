@@ -81,6 +81,16 @@ export class PostService {
       },
     });
 
+    await db.notification.create({
+      data: {
+        message: "You have published a new post.",
+        type: "NEW_POST",
+        status: "UNREAD",
+        userId: id,
+        sentAt: new Date(),
+      },
+    });
+
     return post;
   }
 

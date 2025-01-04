@@ -4,6 +4,7 @@ import { verifyPassword } from "../utils/bcrypt";
 import { LoginInput } from "../inputs/auth.schema";
 import { generateRefreshToken } from "../plugins/authenticate";
 import { FastifyJWT } from "@fastify/jwt";
+import { db } from "../lib/prisma";
 
 export class AuthController {
   static async loginHandler(
@@ -45,6 +46,16 @@ export class AuthController {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
+    });
+
+    await db.notification.create({
+      data: {
+        message: "New login detected from a new device/location",
+        type: "LOGIN_ACTIVITY",
+        status: "UNREAD",
+        userId: user.id,
+        sentAt: new Date(),
+      },
     });
 
     return { accessToken: token, refreshToken };
