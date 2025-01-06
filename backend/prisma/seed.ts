@@ -30,11 +30,11 @@ async function main() {
   // Seed data for tickets
   await prisma.ticket.createMany({
     data: [
-      { id: '1', existentQuantity: 750, eventId: '1', type: 'Standard', price: 50.0 },
-      { id: '2', existentQuantity: 200, eventId: '1', type: 'VIP', price: 100.0 },
-      { id: '3', existentQuantity: 500, eventId: '2', type: 'Standard', price: 75.0 },
-      { id: '4', existentQuantity: 1200, eventId: '3', type: 'Standard', price: 30.0 },
-      { id: '5', existentQuantity: 120, eventId: '4', type: 'VIP', price: 120.0 },
+      { id: '1', existingQuantity: 750, eventId: '1', type: 'Standard', price: 50.0 },
+      { id: '2', existingQuantity: 200, eventId: '1', type: 'VIP', price: 100.0 },
+      { id: '3', existingQuantity: 500, eventId: '2', type: 'Standard', price: 75.0 },
+      { id: '4', existingQuantity: 1200, eventId: '3', type: 'Standard', price: 30.0 },
+      { id: '5', existingQuantity: 120, eventId: '4', type: 'VIP', price: 120.0 },
     ],
   });
 
@@ -52,22 +52,22 @@ async function main() {
   // Seed data for notifications
   await prisma.notification.createMany({
     data: [
-      { id: '1', userId: '1', message: 'Event Tech Conference 2024 is near.', type: 'Event Reminder', sentAt: new Date('2024-07-30 08:00:00') },
-      { id: '2', userId: '2', message: 'Your ticket for AI Summit is confirmed.', type: 'Payment Confirmation', sentAt: new Date('2024-07-15 09:00:00') },
-      { id: '3', userId: '3', message: 'Admin meeting scheduled.', type: 'Admin Alert', sentAt: new Date('2024-07-20 10:30:00') },
-      { id: '4', userId: '4', message: 'Welcome to the platform!', type: 'Welcome Message', sentAt: new Date('2024-07-10 15:00:00') },
-      { id: '5', userId: '5', message: 'Startup Workshop registration ends soon.', type: 'Registration Reminder', sentAt: new Date('2024-07-25 17:00:00') },
+      { id: '1', userId: '1', message: 'Event Tech Conference 2024 is near.', type: 'INFO', sentAt: new Date('2024-07-30 08:00:00') },
+      { id: '2', userId: '2', message: 'Your ticket for AI Summit is confirmed.', type: 'INFO', sentAt: new Date('2024-07-15 09:00:00') },
+      { id: '3', userId: '3', message: 'Admin meeting scheduled.', type: 'INFO', sentAt: new Date('2024-07-20 10:30:00') },
+      { id: '4', userId: '4', message: 'Welcome to the platform!', type: 'INFO', sentAt: new Date('2024-07-10 15:00:00') },
+      { id: '5', userId: '5', message: 'Startup Workshop registration ends soon.', type: 'INFO', sentAt: new Date('2024-07-25 17:00:00') },
     ],
   });
 
   // Seed data for posts
   await prisma.post.createMany({
     data: [
-      { id: '1', authorId: '1', title: 'Tech Revolution', content: 'A deep dive into technology.', location: 'San Francisco', featured_image: 'http://example.com/post1.jpg', publishedAt: new Date('2024-06-01 10:00:00') },
-      { id: '2', authorId: '2', title: 'AI Ethics', content: 'Ethical considerations of AI.', location: 'New York', featured_image: 'http://example.com/post2.jpg', publishedAt: new Date('2024-06-05 11:30:00') },
-      { id: '3', authorId: '3', title: 'Startup Growth', content: 'Tips for scaling startups.', location: 'Los Angeles', featured_image: 'http://example.com/post3.jpg', publishedAt: new Date('2024-06-10 14:00:00') },
-      { id: '4', authorId: '4', title: 'Design Patterns', content: 'Modern UI/UX patterns.', location: 'Seattle', featured_image: 'http://example.com/post4.jpg', publishedAt: new Date('2024-06-15 16:00:00') },
-      { id: '5', authorId: '5', title: 'Code Optimization', content: 'Writing efficient code.', location: 'Austin', featured_image: 'http://example.com/post5.jpg', publishedAt: new Date('2024-06-20 18:30:00') },
+      { id: '1', authorId: '1', title: 'Tech Revolution', content: 'A deep dive into technology.', featured_image: 'http://example.com/post1.jpg', publishedAt: new Date('2024-06-01 10:00:00') },
+      { id: '2', authorId: '2', title: 'AI Ethics', content: 'Ethical considerations of AI.', featured_image: 'http://example.com/post2.jpg', publishedAt: new Date('2024-06-05 11:30:00') },
+      { id: '3', authorId: '3', title: 'Startup Growth', content: 'Tips for scaling startups.', featured_image: 'http://example.com/post3.jpg', publishedAt: new Date('2024-06-10 14:00:00') },
+      { id: '4', authorId: '4', title: 'Design Patterns', content: 'Modern UI/UX patterns.', featured_image: 'http://example.com/post4.jpg', publishedAt: new Date('2024-06-15 16:00:00') },
+      { id: '5', authorId: '5', title: 'Code Optimization', content: 'Writing efficient code.', featured_image: 'http://example.com/post5.jpg', publishedAt: new Date('2024-06-20 18:30:00') },
     ],
   });
 
@@ -96,11 +96,11 @@ async function main() {
   console.log('Seeding completed.');
 }
 
-main()
-  .catch(e => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+// main()
+//   .catch(e => {
+//     console.error(e);
+//     process.exit(1);
+//   })
+//   .finally(async () => {
+//     await prisma.$disconnect();
+//   });

@@ -33,7 +33,7 @@ export const sendMail = async (
     const populatedHtml = Object.keys(variables).reduce((content, key) => {
       const regex = new RegExp(`{{${key}}}`, "g");
       return content.replace(regex, variables[key]);
-    });
+    }, html);
 
     const mailOptions = {
       from: `"Ukuphi Support" <${process.env.EMAIL_USER}>`,

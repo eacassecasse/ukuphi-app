@@ -21,9 +21,9 @@ const userCore = z.object({
         "Phone number must be a valid international format (e.g., +1234567890)",
     }),
   role: z
-    .string({
-      invalid_type_error: "Role must be a string",
-    })
+    .enum(["ORGANIZER", "ATTENDEE", "ADMIN"], {
+      invalid_type_error: "Role must be one of: organizer, admin, attendee",
+    }).default("ATTENDEE")
     .optional(),
 });
 
@@ -54,10 +54,10 @@ const updateUserCore = z.object({
         "Phone number must be a valid international format (e.g., +1234567890)",
     })
     .optional(),
-  role: z
-    .string({
-      invalid_type_error: "Role must be a string",
-    })
+    role: z
+    .enum(["ORGANIZER", "ATTENDEE", "ADMIN"], {
+      invalid_type_error: "Role must be one of: organizer, admin, attendee",
+    }).default("ATTENDEE")
     .optional(),
   password: z.string().optional(),
 });
