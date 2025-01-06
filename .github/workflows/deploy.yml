@@ -32,13 +32,13 @@ jobs:
         echo "" > ~/.ssh/id_rsa
         echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan ${STAGING_SERVER} -p 22 >> ~/.ssh/known_hosts
-        ssh-keyscan ${PRODUCTION_SERVER} -p 22 >> ~/.ssh/known_hosts
+        ssh-keyscan ${{ secrets.STAGING_SERVER_IP }} -p 22 >> ~/.ssh/known_hosts
+        ssh-keyscan ${{ secrets.PRODUCTION_SERVER_IP }} -p 22 >> ~/.ssh/known_hosts
 
     - name: Deploy to Staging
       if: github.ref_name == 'backend-development'
       run: |
-        ssh -o StrictHostKeyChecking=no deploy@${STAGING_SERVER} << EOF
+        ssh -i  ~/.ssh/id_rsa deploy@${STAGING_SERVER} << EOF
           # Set Paths
           BACKEND_PATH="${BASE_PATH}/staging/backend"
           FRONTEND_PATH="${BASE_PATH}/staging/frontend"
