@@ -30,8 +30,8 @@ jobs:
         run: |
           echo "Setting up SSH key..."
           mkdir -p ~/.ssh
-          echo "${{env.DEPLOY_SSH_KEY}}" > ~/.ssh/deploy_rsa
-          chmod 600 ~/.ssh/deploy_rsa
+          echo "${{env.DEPLOY_SSH_KEY}}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
           echo "Adding STAGING_SERVER to known hosts..."
           if [ -z "${{env.STAGING_SERVER}}" ]; then
             echo "Error: STAGING_SERVER is not set"
@@ -50,7 +50,7 @@ jobs:
         if: github.ref_name == 'backend-development'
         run: |
           echo "Starting deployment to staging..."
-          ssh -v -i ~/.ssh/deploy_rsa deploy@${{ env.STAGING_SERVER }} "bash -s" << EOF
+          ssh -v -i ~/.ssh/id_rsa deploy@${{ env.STAGING_SERVER }} "bash -s" << EOF
             set -e
             echo "Deploying to staging server..."
             # Set Paths
@@ -123,7 +123,7 @@ jobs:
         if: github.ref_name == 'main'
         run: |
           echo "Starting deployment to production..."
-          ssh -v -i ~/.ssh/deploy_rsa deploy@${{ env.PRODUCTION_SERVER }} "bash -s" << EOF
+          ssh -v -i ~/.ssh/id_rsa deploy@${{ env.PRODUCTION_SERVER }} "bash -s" << EOF
             set -e
             echo "Deploying to production server..."
             # Set Paths
