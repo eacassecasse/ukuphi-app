@@ -29,8 +29,8 @@ jobs:
       - name: Setup SSH Key
         run: |
           echo "Setting up SSH key..."
-          echo ${{ env.STAGING_SERVER }}
-          echo ${env.STAGING_SERVER} "2 line"
+          echo "${{ env.STAGING_SERVER }}"
+          echo "${{ env.PRODUCTION_SERVER }}"
           mkdir -p ~/.ssh
           echo "${{ env.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
@@ -39,20 +39,20 @@ jobs:
             echo "Error: STAGING_SERVER is not set"
             exit 1
           fi
-          ssh-keyscan ${{ env.STAGING_SERVER }} -p 22 >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ env.STAGING_SERVER }} -p 22 >> ~/.ssh/known_hosts
           echo "Adding PRODUCTION_SERVER to known hosts..."
           if [ -z "${{ env.PRODUCTION_SERVER }}" ]; then
             echo "Error: PRODUCTION_SERVER is not set"
             exit 1
           fi
-          ssh-keyscan ${{ env.PRODUCTION_SERVER }} -p 22 >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ env.PRODUCTION_SERVER }} -p 22 >> ~/.ssh/known_hosts
           echo "SSH key setup completed."
 
       - name: Deploy to Staging
-        if: github.ref_name == 'backend-development'
+        if: ${{ github.ref == 'refs/heads/backend-development' }}
         run: |
           echo "Starting deployment to staging..."
-          ssh -i ~/.ssh/id_rsa deploy@${{ env.STAGING_SERVER }} << EOF
+          ssh -i ~/.ssh/id_rsa deploy@${{ env.STAGING_SERVER }} "bash -s" << EOF
             set -e
             echo "Deploying to staging server..."
             # Set Paths
@@ -122,10 +122,10 @@ jobs:
           EOF
 
       - name: Deploy to Production
-        if: github.ref_name == 'main'
+        if: ${{ github.ref == 'refs/heads/main' }}
         run: |
           echo "Starting deployment to production..."
-          ssh -o StrictHostKeyChecking=no deploy@${{ env.PRODUCTION_SERVER }} << EOF
+          ssh -i ~/.ssh/id_rsa deploy@${{ env.PRODUCTION_SERVER }} "bash -s" << EOF
             set -e
             echo "Deploying to production server..."
             # Set Paths
