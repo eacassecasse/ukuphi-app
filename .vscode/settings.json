@@ -18,6 +18,16 @@
             "database": "ukuphi_db",
             "username": "ukuphi_usr",
             "password": "ukuphi_pwd"
+        },
+        {
+            "previewLimit": 50,
+            "server": "143.110.151.76",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "ukuphi-staging-connection",
+            "database": "ukuphi_db_staging",
+            "username": "ukuphi_usr_staging",
+            "password": "ukuphi_pwd_staging"
         }
     ]
 }
