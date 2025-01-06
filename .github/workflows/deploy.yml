@@ -29,6 +29,8 @@ jobs:
       - name: Setup SSH Key
         run: |
           echo "Setting up SSH key..."
+          echo ${{ env.STAGING_SERVER }}
+          echo ${env.STAGING_SERVER} "2 line"
           mkdir -p ~/.ssh
           echo "${{ env.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
