@@ -1,0 +1,81 @@
+name: Deploy Ukhupi App
+
+on:
+  push:
+    branches:
+      - main
+      - backend-development
+
+jobs:
+  deploy:
+    name: Deploy Ukhupi App
+    runs-on: ubuntu-latest
+
+    env:
+      STAGING_SERVER: 64.23.148.97
+      PRODUCTION_SERVER: 143.110.151.76
+      APP_NAME: ukhupi-app
+      BASE_PATH: /var/www/ukhupi-app
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20
+
+    - name: Deploy to Staging
+      if: github.ref_name == 'backend-development'
+      run: |
+        ssh -o StrictHostKeyChecking=no deploy@${STAGING_SERVER} << EOF
+          # Set Paths
+          BACKEND_PATH="${BASE_PATH}/staging/backend"
+          FRONTEND_PATH="${BASE_PATH}/staging/frontend"
+
+          # Backend Deployment
+          mkdir -p ${BACKEND_PATH}/releases ${BACKEND_PATH}/shared
+          cd ${BACKEND_PATH}/releases
+          git clone --depth 1 git@github.com:eacassecasse/ukuphi-app.git $(date +%Y%m%d%H%M%S)
+          ln -sfn $(ls -td */ | head -1) ../current
+          cd ../current/backend
+          npm install
+          pm2 restart ${APP_NAME}-backend-staging || pm2 start src/index.js --name ${APP_NAME}-backend-staging
+
+          # Frontend Deployment
+          mkdir -p ${FRONTEND_PATH}/releases ${FRONTEND_PATH}/shared
+          cd ${FRONTEND_PATH}/releases
+          git clone --depth 1 git@github.com:eacassecasse/ukuphi-app.git $(date +%Y%m%d%H%M%S)
+          ln -sfn $(ls -td */ | head -1) ../current
+          cd ../current/frontend
+          npm install
+          npm run build
+        EOF
+
+    - name: Deploy to Production
+      if: github.ref_name == 'main'
+      run: |
+        ssh -o StrictHostKeyChecking=no deploy@${PRODUCTION_SERVER} << EOF
+          # Set Paths
+          BACKEND_PATH="${BASE_PATH}/production/backend"
+          FRONTEND_PATH="${BASE_PATH}/production/frontend"
+
+          # Backend Deployment
+          mkdir -p ${BACKEND_PATH}/releases ${BACKEND_PATH}/shared
+          cd ${BACKEND_PATH}/releases
+          git clone --depth 1 git@github.com:eacassecasse/ukuphi-app.git $(date +%Y%m%d%H%M%S)
+          ln -sfn $(ls -td */ | head -1) ../current
+          cd ../current/backend
+          npm install
+          pm2 restart ${APP_NAME}-backend-production || pm2 start src/index.js --name ${APP_NAME}-backend-production
+
+          # Frontend Deployment
+          mkdir -p ${FRONTEND_PATH}/releases ${FRONTEND_PATH}/shared
+          cd ${FRONTEND_PATH}/releases
+          git clone --depth 1 git@github.com:eacassecasse/ukuphi-app.git $(date +%Y%m%d%H%M%S)
+          ln -sfn $(ls -td */ | head -1) ../current
+          cd ../current/frontend
+          npm install
+          npm run build
+        EOF
