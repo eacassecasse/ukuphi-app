@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      STAGING_SERVER: ${{ secrets.STAGING_SERVER_IP }}
-      PRODUCTION_SERVER: ${{ secrets.PRODUCTION_SERVER_IP }}
-      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      STAGING_SERVER: ${{ secrets.STAGING_IP }}
+      PRODUCTION_SERVER: ${{ secrets.PRODUCTION_IP }}
+      DEPLOY_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
       APP_NAME: ukhupi-app
       BASE_PATH: /var/www/ukhupi-app
 
