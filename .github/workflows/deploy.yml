@@ -28,16 +28,31 @@ jobs:
 
       - name: Setup SSH Key
         run: |
+          echo "Setting up SSH key..."
           mkdir -p ~/.ssh
           echo "${{ env.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          echo "Adding STAGING_SERVER to known hosts..."
+          if [ -z "${{ env.STAGING_SERVER }}" ]; then
+            echo "Error: STAGING_SERVER is not set"
+            exit 1
+          fi
           ssh-keyscan ${{ env.STAGING_SERVER }} -p 22 >> ~/.ssh/known_hosts
+          echo "Adding PRODUCTION_SERVER to known hosts..."
+          if [ -z "${{ env.PRODUCTION_SERVER }}" ]; then
+            echo "Error: PRODUCTION_SERVER is not set"
+            exit 1
+          fi
           ssh-keyscan ${{ env.PRODUCTION_SERVER }} -p 22 >> ~/.ssh/known_hosts
+          echo "SSH key setup completed."
 
       - name: Deploy to Staging
         if: github.ref_name == 'backend-development'
         run: |
+          echo "Starting deployment to staging..."
           ssh -i ~/.ssh/id_rsa deploy@${{ env.STAGING_SERVER }} << EOF
+            set -e
+            echo "Deploying to staging server..."
             # Set Paths
             BACKEND_PATH="${BASE_PATH}/staging/backend"
             FRONTEND_PATH="${BASE_PATH}/staging/frontend"
@@ -107,7 +122,10 @@ jobs:
       - name: Deploy to Production
         if: github.ref_name == 'main'
         run: |
+          echo "Starting deployment to production..."
           ssh -o StrictHostKeyChecking=no deploy@${{ env.PRODUCTION_SERVER }} << EOF
+            set -e
+            echo "Deploying to production server..."
             # Set Paths
             BACKEND_PATH="${BASE_PATH}/production/backend"
             FRONTEND_PATH="${BASE_PATH}/production/frontend"
