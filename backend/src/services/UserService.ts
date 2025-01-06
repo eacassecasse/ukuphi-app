@@ -54,7 +54,6 @@ export class UserService {
   static async createUser(input: CreateUserInput) {
     const { password, role, ...rest } = input;
     const hashedPassword = await hashPassword(password);
-    const userRole = role?.toLocaleUpperCase() ?? "ATTENDEE";
 
     const dbUser = await db.user.findUnique({
       where: {
@@ -67,7 +66,7 @@ export class UserService {
     }
 
     const user = await db.user.create({
-      data: { ...rest, role: userRole, password: hashedPassword },
+      data: { ...rest, role: role, password: hashedPassword },
       select: {
         id: true,
         name: true,
@@ -81,7 +80,7 @@ export class UserService {
     await db.notification.create({
       data: {
         message: "Welcome to Ukuphi App! We're glad to have you.",
-        type: "WELCOME",
+        type: "INFO",
         status: "UNREAD",
         userId: user.id,
         sentAt: new Date(),
@@ -108,7 +107,7 @@ export class UserService {
       ...(input.password
         ? { password: await hashPassword(input.password) }
         : {}),
-      ...(input.role ? { role: input.role.toLocaleUpperCase() } : {}),
+      ...(input.role ? { role: input.role } : {}),
     };
 
     const user = await db.user.update({
@@ -127,7 +126,7 @@ export class UserService {
     await db.notification.create({
       data: {
         message: "Your profile has been successfully update.",
-        type: "UPDATE",
+        type: "INFO",
         status: "UNREAD",
         userId: user.id,
         sentAt: new Date(),

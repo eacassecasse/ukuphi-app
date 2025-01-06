@@ -4,8 +4,9 @@ const paymentCore = z.object({
   amount: z.number({
     required_error: "Amount is required",
   }),
-  method: z.string({
+  method: z.enum(["DEBIT_CARD", "CREDIT_CARD", "MOBILE_WALLET"],{
     required_error: "Method is required",
+    invalid_type_error: "Type must be one of: debit_card, credit_card, mobile_wallet"
   }),
 });
 

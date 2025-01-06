@@ -11,8 +11,8 @@ const ticketCore = z.object({
     .refine((value) => Number.isInteger(value * 100), {
       message: "Price must have at most 2 decimal places",
     }),
-  existentQuantity: z.number({
-    required_error: "Existent Quantity is required",
+  existingQuantity: z.number({
+    required_error: "Existing Quantity is required",
   }),
 });
 

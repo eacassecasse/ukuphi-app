@@ -3,30 +3,40 @@
 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-// enum Role {
-//   ORGANIZER
-//   ATTENDEE
-//   ADMIN
-// }
+enum Role {
+  ORGANIZER
+  ATTENDEE
+  ADMIN
+}
 
-// enum Payment_Method {
-//   DEBIT_CARD
-//   CREDIT_CARD
-//   MOBILE_WALLET
-// }
+enum Payment_Method {
+  DEBIT_CARD
+  CREDIT_CARD
+  MOBILE_WALLET
+}
 
-// enum Payment_Status {
-//   PENDING
-//   CONFIRMED
-// }
+enum Payment_Status {
+  PENDING
+  CONFIRMED
+}
+
+enum Notification_Type {
+  INFO
+  WARNING
+  ERROR
+}
+
+enum Notification_Status {
+  READ
+  UNREAD
+}
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  // provider = "postgresql"
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -36,7 +46,7 @@ model User {
   email         String         @unique
   phone         String?
   password      String
-  role          String         @default("ATTENDEE")
+  role          Role           @default(ATTENDEE)
   verified      Boolean?       @default(false)
   events        Event[]
   posts         Post[]
@@ -68,7 +78,7 @@ model Ticket {
   eventId          String    @map("event_id")
   type             String
   price            Float
-  existentQuantity Int       @map("existent_quantity")
+  existingQuantity Int       @map("existing_quantity")
   event            Event     @relation(fields: [eventId], references: [id])
   payments         Payment[]
 
@@ -76,29 +86,29 @@ model Ticket {
 }
 
 model Payment {
-  id         String   @id @default(uuid())
-  userId     String   @map("user_id")
-  ticketId   String   @map("ticket_id")
+  id         String         @id @default(uuid())
+  userId     String         @map("user_id")
+  ticketId   String         @map("ticket_id")
   amount     Float
-  method     String
-  status     String
+  method     Payment_Method
+  status     Payment_Status
   qr_code    String
-  created_at DateTime @default(now())
-  ticket     Ticket   @relation(fields: [ticketId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  created_at DateTime       @default(now())
+  ticket     Ticket         @relation(fields: [ticketId], references: [id])
+  user       User           @relation(fields: [userId], references: [id])
 
   @@unique([userId, ticketId])
   @@map("payments")
 }
 
 model Notification {
-  id      String   @id @default(uuid())
-  userId  String   @map("user_id")
+  id      String              @id @default(uuid())
+  userId  String              @map("user_id")
   message String
-  type    String
-  status  String   @default("UNREAD") // Change to Enum('UNREAD', 'READ')
-  sentAt  DateTime @map("sent_at")
-  user    User     @relation(fields: [userId], references: [id])
+  type    Notification_Type
+  status  Notification_Status @default(UNREAD)
+  sentAt  DateTime            @map("sent_at")
+  user    User                @relation(fields: [userId], references: [id])
 
   @@map("notifications")
 }
@@ -108,7 +118,6 @@ model Post {
   authorId       String         @map("author_id")
   title          String
   content        String
-  location       String //Remove This field is not needed
   featured_image String
   publishedAt    DateTime       @map("published_at")
   author         User           @relation(fields: [authorId], references: [id])

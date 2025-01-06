@@ -32,7 +32,7 @@ export class TicketService {
         id: true,
         price: true,
         type: true,
-        existentQuantity: true,
+        existingQuantity: true,
         event: {
           select: {
             id: true,
@@ -75,7 +75,7 @@ export class TicketService {
         id: true,
         price: true,
         type: true,
-        existentQuantity: true,
+        existingQuantity: true,
         event: {
           select: {
             id: true,
@@ -125,7 +125,7 @@ export class TicketService {
         id: true,
         price: true,
         type: true,
-        existentQuantity: true,
+        existingQuantity: true,
         event: {
           select: {
             id: true,
@@ -212,7 +212,7 @@ export class TicketService {
             select: {
               id: true,
               price: true,
-              existentQuantity: true,
+              existingQuantity: true,
               type: true,
             },
           },
@@ -227,7 +227,7 @@ export class TicketService {
         data: {
           userId,
           ticketId: ticket.id,
-          status: "PAID",
+          status: "CONFIRMED",
           qr_code: qrCode,
           ...rest,
         },
@@ -249,7 +249,7 @@ export class TicketService {
             select: {
               id: true,
               price: true,
-              existentQuantity: true,
+              existingQuantity: true,
               type: true,
             },
           },
@@ -262,7 +262,7 @@ export class TicketService {
         id: ticket.id,
       },
       data: {
-        existentQuantity: ticket.existentQuantity - input.amount,
+        existingQuantity: ticket.existingQuantity - input.amount,
       },
     });
 

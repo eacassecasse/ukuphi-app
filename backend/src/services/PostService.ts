@@ -63,7 +63,6 @@ export class PostService {
         ...input,
         publishedAt: new Date(),
         authorId: id,
-        location: "",
       },
       select: {
         id: true,
@@ -84,7 +83,7 @@ export class PostService {
     await db.notification.create({
       data: {
         message: "You have published a new post.",
-        type: "NEW_POST",
+        type: "INFO",
         status: "UNREAD",
         userId: id,
         sentAt: new Date(),
