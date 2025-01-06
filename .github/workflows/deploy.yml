@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      STAGING_SERVER: 64.23.148.97
-      PRODUCTION_SERVER: 143.110.151.76
+      STAGING_SERVER: ${{ secrets.STAGING_SERVER_IP }}
+      PRODUCTION_SERVER: ${{ secrets.PRODUCTION_SERVER_IP }}
       APP_NAME: ukhupi-app
       BASE_PATH: /var/www/ukhupi-app
 
@@ -26,6 +26,13 @@ jobs:
       with:
         node-version: 20
 
+    - name: Setup SSH Key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.STAGING_SERVER }} >> ~/.ssh/known_hosts
+
     - name: Deploy to Staging
       if: github.ref_name == 'backend-development'
       run: |
@@ -37,10 +44,53 @@ jobs:
           # Backend Deployment
           mkdir -p ${BACKEND_PATH}/releases ${BACKEND_PATH}/shared
           cd ${BACKEND_PATH}/releases
-          git clone --depth 1 git@github.com:eacassecasse/ukuphi-app.git $(date +%Y%m%d%H%M%S)
-          ln -sfn $(ls -td */ | head -1) ../current
-          cd ../current/backend
-          npm install
+                    RELEASE_DIR=$(date +%Y%m%d%H%M%S)
+          if ! git clone --depth 1 git@github.com:eacassecasse/ukuphi-app.git $RELEASE_DIR; then
+            echo "Failed to clone repository"
+            exit 1
+          fi
+
+          if ! ln -sfn $RELEASE_DIR ../current; then
+            echo "Failed to create symlink"
+            exit 1
+          fi
+
+          cd ../current/backend || exit 1
+
+          if ! npm install; then
+            echo "Failed to install dependencies"
+            exit 1
+          fi
+
+          if pm2 restart ${APP_NAME}-backend-staging; then
+            echo "Application restarted successfully"
+          else
+            echo "Attempting fresh start..."
+            if ! pm2 start src/index.js --name ${APP_NAME}-backend-staging; then
+              echo "Failed to start application"
+              exit 1
+            fi
+          fi
+
+          # Wait for application to start
+          sleep 10
+
+          # Health check (assumes health endpoint at /health)
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          until curl -s http://localhost:5000/health | grep -q "ok" || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+            echo "Waiting for application to be healthy..."
+            sleep 5
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+          done
+
+          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+            echo "Application failed health check"
+            exit 1
+          fi
+
+          echo "Deployment completed successfully"
+
           pm2 restart ${APP_NAME}-backend-staging || pm2 start src/index.js --name ${APP_NAME}-backend-staging
 
           # Frontend Deployment
