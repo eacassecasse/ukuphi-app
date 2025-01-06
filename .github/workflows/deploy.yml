@@ -29,9 +29,11 @@ jobs:
     - name: Setup SSH Key
       run: |
         mkdir -p ~/.ssh
+        echo "" > ~/.ssh/id_rsa
         echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.STAGING_SERVER }} >> ~/.ssh/known_hosts
+        ssh-keyscan -H ${{ secrets.STAGING_SERVER_IP }} -p 22 >> ~/.ssh/known_hosts
+        ssh-keyscan -H ${{ secrets.PRODUCTION_SERVER_IP }} -p 22 >> ~/.ssh/known_hosts
 
     - name: Deploy to Staging
       if: github.ref_name == 'backend-development'
