@@ -16,12 +16,12 @@ jobs:
       DEPLOY_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
       USER: ${{ secrets.DEPLOY_USER }}
       REPO_URL: ${{ secrets.REPO_URL }}
-      APP_NAME: ukhupi-app
-      BASE_PATH: /var/www/ukhupi-app
+      APP_NAME: ukuphi-app
+      BASE_PATH: /var/www/ukuphi-app
 
     strategy:
       matrix:
-        environment: [staging] # Add production afterwards
+        environment: [staging, production]
         branch: [backend-development, main]
 
     steps:
