@@ -126,6 +126,6 @@ jobs:
             echo "Inside the Symlink"
             ls -la
             npm install --production
-            pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start index.js --name "ukuphi-backend-${{ matrix.environment }}"
+            pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start dist/index.js --name "ukuphi-backend-${{ matrix.environment }}"
           EOF
           
