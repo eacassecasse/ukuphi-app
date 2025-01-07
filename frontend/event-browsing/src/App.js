@@ -12,6 +12,7 @@ import Contact from "./pages/Contact";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import ProtectedRoute from "./components/ProtectedRoute";
+import TicketPurchase from "./pages/TicketPurchase";
 
 function App() {
   return (
@@ -37,14 +38,15 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<SignIn />} />
+            <Route path="/purchase-ticket" element={<TicketPurchase />} />
+
           </Routes>
         </main>
         
         <Footer />
       </div>
     </Router>
-  );
+  ); 
 }
 
 export default App;
-

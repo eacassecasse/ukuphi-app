@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -48,9 +49,11 @@ const EventDetail = () => {
           <p className="text-gray-600 mb-4">Organizer: {event.organizer}</p>
           <p className="text-gray-700 mb-6">{event.description}</p>
 
-          <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4">
-            Buy Tickets
-          </button>
+          <Link to="/purchase-ticket">
+            <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4">
+              Buy Tickets
+            </button>
+          </Link>
 
           <div className="w-full h-64 mb-6">
             <iframe
