@@ -101,12 +101,8 @@ jobs:
             # Clone or pull the repository
             if [ ! -d "$REPO_PATH" ]; then
               git clone ${{ env.REPO_URL }} $REPO_PATH
-              echo "Inside the Cloned Repo"
-              ls -la $REPO_PATH
             else
               cd $REPO_PATH
-              echo "Inside the Pulled Repo"
-              ls -la
               git pull origin ${{ matrix.branch }}
             fi
 
@@ -117,14 +113,10 @@ jobs:
             fi
 
             # Set the 'current' symlink to the new release
-            echo "Debugging the backend path and creating the symlink"
-            ls -la $BACKEND_PATH
             ln -sfn $BACKEND_PATH $APP_PATH/current
 
             # Install dependencies and start/restart the application
             cd $APP_PATH/current
-            echo "Inside the Symlink"
-            ls -la
             npm install --production
             pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start dist/index.js --name "ukuphi-backend-${{ matrix.environment }}"
           EOF
