@@ -117,6 +117,8 @@ jobs:
             fi
 
             # Set the 'current' symlink to the new release
+            echo "Debugging the backend path and creating the symlink"
+            ls -la $BACKEND_PATH
             ln -sfn $BACKEND_PATH $APP_PATH/current
 
             # Install dependencies and start/restart the application
