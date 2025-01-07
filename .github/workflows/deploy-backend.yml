@@ -92,6 +92,7 @@ jobs:
             # Define environment paths
             APP_PATH="${{ env.BASE_PATH }}/${{ matrix.environment }}/backend"
             REPO_PATH="$APP_PATH/releases/$(date +'%Y%m%d%H%M%S')"
+            BACKEND_PATH="$REPO_PATH/backend"
 
             # Create necessary directories
             mkdir -p $APP_PATH/releases
@@ -109,8 +110,14 @@ jobs:
               git pull origin ${{ matrix.branch }}
             fi
 
+            # Ensure backend folder exists
+            if [ ! -d "$BACKEND_PATH" ]; then
+              echo "Error: Backend folder not found in the repository."
+              exit 1
+            fi
+
             # Set the 'current' symlink to the new release
-            ln -sfn $REPO_PATH $APP_PATH/current
+            ln -sfn $BACKEND_PATH $APP_PATH/current
 
             # Install dependencies and start/restart the application
             cd $APP_PATH/current
