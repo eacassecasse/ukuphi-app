@@ -79,12 +79,14 @@ jobs:
           ssh-keyscan -H ${{ matrix.environment == 'staging' && env.STAGING_SERVER || env.PRODUCTION_SERVER }} >> ~/.ssh/known_hosts
           echo "SSH key setup completed."
 
-      - name: Debug SSH Setup
+      - name: Debug Runner Directory
         run: |
-          echo "Checking SSH key..."
-          ls -la ~/.ssh
-          cat ~/.ssh/id_rsa
-          ssh -v ${{ env.USER }}@$host "echo 'SSH connection successful'"
+          echo "Inspecting /home/runner directory..."
+          ls -la /home/runner
+          echo "Inspecting /home/runner/.ssh directory..."
+          ls -la /home/runner/.ssh
+          echo "Inspecting /home/runner/work directory..."
+          ls -la /home/runner/work
 
       - name: Build Application
         run: |
