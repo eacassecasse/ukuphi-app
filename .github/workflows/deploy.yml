@@ -49,7 +49,7 @@ jobs:
         run: |
           if [[ "${{ matrix.branch }}" == "frontend-development" || "${{ matrix.branch }}" == "main" ]]; then
             echo "Deploying Frontend"
-            cd frontend
+            # cd frontend
           else
             echo "Deploying Backend"
             cd backend
@@ -79,11 +79,18 @@ jobs:
           ssh-keyscan -H ${{ matrix.environment == 'staging' && env.STAGING_SERVER || env.PRODUCTION_SERVER }} >> ~/.ssh/known_hosts
           echo "SSH key setup completed."
 
+      - name: Debug SSH Setup
+        run: |
+          echo "Checking SSH key..."
+          ls -la ~/.ssh
+          cat ~/.ssh/id_rsa
+          ssh -v ${{ env.USER }}@$host "echo 'SSH connection successful'"
+
       - name: Build Application
         run: |
           if [[ "${{ matrix.branch }}" == "frontend-development" || "${{ matrix.branch }}" == "main" ]]; then
-            cd frontend
-            npm run build || true
+            # cd frontend
+            # npm run build || true
           else
             cd backend
             npm run build || true
