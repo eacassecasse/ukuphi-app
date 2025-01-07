@@ -70,12 +70,12 @@ jobs:
   
       - name: Debug Runner Directory
         run: |
-          echo "Inspecting /home/runner directory..."
-          ls -la /home/runner
-          echo "Inspecting /home/runner/.ssh directory..."
-          ls -la /home/runner/.ssh
-          echo "Inspecting /home/runner/work directory..."
-          ls -la /home/runner/work
+          echo "Listing all directories..."
+          ls -la
+          echo "Listing frontend directory..."
+          ls -la frontend || echo "Frontend directory not found
+          echo "Listing backend directory..."
+          ls -la backend || echo "Backend directory not found"
 
       - name: Install Dependencies
         run: |
