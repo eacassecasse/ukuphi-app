@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - backend-development
+      - frontend-development
 
 jobs:
   deploy:
@@ -14,137 +15,108 @@ jobs:
       STAGING_SERVER: ${{ secrets.STAGING_IP }}
       PRODUCTION_SERVER: ${{ secrets.PRODUCTION_IP }}
       DEPLOY_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+      USER: ${{ secrets.DEPLOY_USER }}
+      REPO_URL: ${{ secrets.REPO_URL }}
       APP_NAME: ukhupi-app
       BASE_PATH: /var/www/ukhupi-app
+
+    strategy:
+      matrix:
+        environment: [staging, production]
+        branch: [backend-development, frontend-development, main]
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
+      - name: Determine Deployment Path
+        id: deployment_path
+        run: |
+          if [[ "${{ matrix.branch }}" == "main" ]]; then
+            echo "path=production" >> $GITHUB_ENV
+            echo "host=${{ env.PRODUCTION_SERVER }}" >> $GITHUB_ENV
+          else
+            echo "path=staging" >> $GITHUB_ENV
+            echo "host=${{ env.STAGING_SERVER }}" >> $GITHUB_ENV
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
-      - name: Setup SSH Key
+      - name: Install Dependencies
+        run: |
+          if [[ "${{ matrix.branch }}" == "frontend-development" || "${{ matrix.branch }}" == "main" ]]; then
+            cd frontend
+          else
+            cd backend
+          fi
+          npm install
+
+      - name: Setup SSH Key for authentication
         run: |
           echo "Setting up SSH key..."
           mkdir -p ~/.ssh
-          echo "${{env.DEPLOY_SSH_KEY}}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          echo "Adding STAGING_SERVER to known hosts..."
-          if [ -z "${{env.STAGING_SERVER}}" ]; then
-            echo "Error: STAGING_SERVER is not set"
-            exit 1
+
+          if [! -f ~/.ssh/id_rsa ]; then
+            echo "${{ env.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+          else
+            echo "SSH private key id_rsa already exists, skipping overwrite"
           fi
-          ssh-keyscan -H ${{ env.STAGING_SERVER }} -p 22 >> ~/.ssh/known_hosts
-          echo "Adding PRODUCTION_SERVER to known hosts..."
-          if [ -z "${{ env.PRODUCTION_SERVER }}" ]; then
-            echo "Error: PRODUCTION_SERVER is not set"
-            exit 1
+
+          if [! -f ~/.ssh/droplet_id_rsa ]; then
+            echo "${{ env.DEPLOY_SSH_KEY }}" > ~/.ssh/droplet_id_rsa
+            chmod 600 ~/.ssh/id_rsa
+          else
+            echo "SSH private key droplet_id_rsa already exists, skipping overwrite"
           fi
-          ssh-keyscan -H ${{ env.PRODUCTION_SERVER }} -p 22 >> ~/.ssh/known_hosts
+
+          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ matrix.environment == 'staging' && env.STAGING_SERVER || env.PRODUCTION_SERVER }} >>/.ssh/known_hosts
           echo "SSH key setup completed."
 
-      - name: Deploy to Staging
-        if: github.ref_name == 'backend-development'
+      - name: Build Application
         run: |
-          echo "Starting deployment to staging..."
-          ssh -v -i ~/.ssh/id_rsa deploy@${{ env.STAGING_SERVER }} "bash -s" << EOF
-            set -e
-            echo "Deploying to staging server..."
-            # Set Paths
-            BACKEND_PATH="${BASE_PATH}/staging/backend"
-            FRONTEND_PATH="${BASE_PATH}/staging/frontend"
+          if [[ "${{ matrix.branch }}" == "frontend-development" || "${{ matrix.branch }}" == "main" ]]; then
+            cd frontend
+            npm run build
+          else
+            cd backend
+            npm run build || true
+          fi
 
-            # Backend Deployment
-            mkdir -p ${BACKEND_PATH}/releases ${BACKEND_PATH}/shared
-            cd ${BACKEND_PATH}/releases
-            RELEASE_DIR=$(date +%Y%m%d%H%M%S)
-            if ! git clone --depth 1 git@github.com:eacassecasse/ukuphi-app.git $RELEASE_DIR; then
-              echo "Failed to clone repository"
-              exit 1
-            fi
+      - name: Deploy Application
+        run: |
+          echo "Starting deployment to ${{ matrix.environment }}..."
+          ssh -o StrictHostKeyChecking=no ${{ env.USER }}@$host << 'EOF'
+            # Define environment paths
+            APP_PATH="${{ env.BASE_PATH }}/${{ matrix.environment }}"
+            REPO_PATH="$APP_PATH/releases/$(date +'%Y%m%d%H%M%S')"
 
-            if ! ln -sfn $RELEASE_DIR ../current; then
-              echo "Failed to create symlink"
-              exit 1
-            fi
+            # Create necessary directories
+            mkdir -p $APP_PATH/releases
+            mkdir -p $APP_PATH/shared
 
-            cd ../current/backend || exit 1
-
-            if ! npm install; then
-              echo "Failed to install dependencies"
-              exit 1
-            fi
-
-            if pm2 restart ${APP_NAME}-backend-staging; then
-              echo "Application restarted successfully"
+            # Clone or pull the repository
+            if [[ ! -d "$REPO_PATH" ]]; then
+              git clone ${{ env.REPO_URL }} $REPO_PATH
             else
-              echo "Attempting fresh start..."
-              if ! pm2 start src/index.js --name ${APP_NAME}-backend-staging; then
-                echo "Failed to start application"
-                exit 1
-              fi
+              cd $REPO_PATH
+              git pull origin ${{ matrix.branch }}
             fi
 
-            # Wait for application to start
-            sleep 10
+            # Set the 'current' symlink to the new release
+            ln -sfn $REPO_PATH $APP_PATH/current
 
-            # Health check (assumes health endpoint at /health)
-            MAX_RETRIES=5
-            RETRY_COUNT=0
-            until curl -s http://localhost:5000/health | grep -q "ok" || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
-              echo "Waiting for application to be healthy..."
-              sleep 5
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-            done
-
-            if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-              echo "Application failed health check"
-              exit 1
+            # Install dependencies and start/restart the application
+            cd $APP_PATH/current
+            npm install --production
+            if [[ "${{ matrix.branch }}" == "frontend-development" || "${{ matrix.branch }}" == "main" ]]; then
+              pm2 restart "ukuphi-frontend-${{ matrix.environment }}" || pm2 start build --name "ukuphi-frontend-${{ matrix.environment }}"
+            else
+              pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start index.js --name "ukuphi-backend-${{ matrix.environment }}"
             fi
-
-            echo "Deployment completed successfully"
-
-            pm2 restart ${APP_NAME}-backend-staging || pm2 start src/index.js --name ${APP_NAME}-backend-staging
-
-            # Frontend Deployment
-            mkdir -p ${FRONTEND_PATH}/releases ${FRONTEND_PATH}/shared
-            cd ${FRONTEND_PATH}/releases
-            git clone --depth 1 git@github.com:eacassecasse/ukuphi-app.git $(date +%Y%m%d%H%M%S)
-            ln -sfn $(ls -td */ | head -1) ../current
-            cd ../current/frontend
-            npm install
-            npm run build
           EOF
-
-      - name: Deploy to Production
-        if: github.ref_name == 'main'
-        run: |
-          echo "Starting deployment to production..."
-          ssh -v -i ~/.ssh/id_rsa deploy@${{ env.PRODUCTION_SERVER }} "bash -s" << EOF
-            set -e
-            echo "Deploying to production server..."
-            # Set Paths
-            BACKEND_PATH="${BASE_PATH}/production/backend"
-            FRONTEND_PATH="${BASE_PATH}/production/frontend"
-
-            # Backend Deployment
-            mkdir -p ${BACKEND_PATH}/releases ${BACKEND_PATH}/shared
-            cd ${BACKEND_PATH}/releases
-            git clone --depth 1 git@github.com:eacassecasse/ukuphi-app.git $(date +%Y%m%d%H%M%S)
-            ln -sfn $(ls -td */ | head -1) ../current
-            cd ../current/backend
-            npm install
-            pm2 restart ${APP_NAME}-backend-production || pm2 start src/index.js --name ${APP_NAME}-backend-production
-
-            # Frontend Deployment
-            mkdir -p ${FRONTEND_PATH}/releases ${FRONTEND_PATH}/shared
-            cd ${FRONTEND_PATH}/releases
-            git clone --depth 1 git@github.com:eacassecasse/ukuphi-app.git $(date +%Y%m%d%H%M%S)
-            ln -sfn $(ls -td */ | head -1) ../current
-            cd ../current/frontend
-            npm install
-            npm run build
-          EOF
+          
