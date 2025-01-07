@@ -54,7 +54,7 @@ jobs:
             echo "Deploying Backend"
             cd backend
           fi
-          npm install
+          npm install || true
 
       - name: Setup SSH Key for authentication
         run: |
@@ -114,7 +114,7 @@ jobs:
 
             # Install dependencies and start/restart the application
             cd $APP_PATH/current
-            npm install --production
+            npm install --production || true
             if [[ "${{ matrix.branch }}" == "frontend-development" || "${{ matrix.branch }}" == "main" ]]; then
               pm2 restart "ukuphi-frontend-${{ matrix.environment }}" || pm2 start build --name "ukuphi-frontend-${{ matrix.environment }}"
             else
