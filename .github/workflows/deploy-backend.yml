@@ -100,8 +100,10 @@ jobs:
             # Clone or pull the repository
             if [ ! -d "$REPO_PATH" ]; then
               git clone ${{ env.REPO_URL }} $REPO_PATH
+              ls -la $REPO_PATH
             else
               cd $REPO_PATH
+              ls -la
               git pull origin ${{ matrix.branch }}
             fi
 
