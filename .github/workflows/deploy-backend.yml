@@ -99,10 +99,11 @@ jobs:
 
             # Clone or pull the repository
             if [ ! -d "$REPO_PATH" ]; then
-              echo "Cloning data from ${{ env.REPO_URL }}"
-              git clone https://github.com/eacassecasse/ukuphi-app.git $REPO_PATH
+              git clone ${{ env.REPO_URL }} $REPO_PATH
+              ls -la $REPO_PATH
             else
               cd $REPO_PATH
+              ls -la
               git pull origin ${{ matrix.branch }}
             fi
 
@@ -111,6 +112,7 @@ jobs:
 
             # Install dependencies and start/restart the application
             cd $APP_PATH/current
+            ls -la
             npm install --production
             pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start index.js --name "ukuphi-backend-${{ matrix.environment }}"
           EOF
