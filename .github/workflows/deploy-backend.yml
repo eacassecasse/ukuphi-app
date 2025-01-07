@@ -116,7 +116,7 @@ jobs:
             ln -sfn $BACKEND_PATH $APP_PATH/current
 
             # Install dependencies and start/restart the application
-            cd $APP_PATH/current
+            cd $APP_PATH/current/backend
             npm install --production
             pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start dist/index.js --name "ukuphi-backend-${{ matrix.environment }}"
           EOF
