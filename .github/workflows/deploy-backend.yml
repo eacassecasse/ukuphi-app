@@ -127,9 +127,9 @@ jobs:
             # Install dependencies and start/restart the application
             cd $APP_PATH/current/backend
             npm install --omit=dev --loglevel=error
-            pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start dist/index.js --name "ukuphi-backend-${{ matrix.environment }}"
-
             # Seeding the database with ficticious data
             npx prisma db seed
+            pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start dist/index.js --name "ukuphi-backend-${{ matrix.environment }}"
+
           EOF
           
