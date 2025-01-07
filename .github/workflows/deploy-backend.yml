@@ -21,7 +21,7 @@ jobs:
 
     strategy:
       matrix:
-        environment: [staging, production]
+        environment: [staging] # Add production afterwards 
         branch: [backend-development, main]
 
     steps:
@@ -99,11 +99,8 @@ jobs:
             mkdir -p $APP_PATH/shared
 
             # Clone or pull the repository
-            if [[ ! -d "$REPO_PATH" ]]; then
-              git clone  --depth 1 ${{ env.REPO_URL }} $REPO_PATH
-              cd $REPO_PATH
-              git sparse-checkout init --cone
-              git sparse-checkout set $BACKEND_PATH
+            if [ ! -d "$REPO_PATH" ]; then
+              git clone ${{ env.REPO_URL }} $REPO_PATH
             else
               cd $REPO_PATH
               git pull origin ${{ matrix.branch }}
