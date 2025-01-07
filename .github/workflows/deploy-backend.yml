@@ -114,7 +114,7 @@ jobs:
             cp $APP_PATH/shared/.env $APP_PATH/current/backend/.env
 
             # Add .env to .gitignore if it's not already present
-            if [ ! grep -q ".env" $APP_PATH/current/backend/.gitignore ]; then
+            if ! grep -q ".env" $APP_PATH/current/backend/.gitignore; then
               echo ".env" >> $APP_PATH/current/backend/.gitignore
               echo ".env added to .gitignore"
             else
@@ -127,8 +127,6 @@ jobs:
             # Install dependencies and start/restart the application
             cd $APP_PATH/current/backend
             npm install --omit=dev --loglevel=error
-            # Seeding the database with ficticious data
-            npx prisma db seed
             pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start dist/index.js --name "ukuphi-backend-${{ matrix.environment }}"
 
           EOF
