@@ -100,7 +100,7 @@ jobs:
             # Clone or pull the repository
             if [ ! -d "$REPO_PATH" ]; then
               echo "Cloning data from ${{ env.REPO_URL }}"
-              git clone ${{ env.REPO_URL }} $REPO_PATH
+              git clone https://github.com/eacassecasse/ukuphi-app.git $REPO_PATH
             else
               cd $REPO_PATH
               git pull origin ${{ matrix.branch }}
