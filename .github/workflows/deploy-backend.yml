@@ -50,14 +50,14 @@ jobs:
           mkdir -p ~/.ssh
   
           if [ ! -f ~/.ssh/id_rsa ]; then
-            echo "${{ env.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+            echo "${{ env.DEPLOY_SSH_KEY }}" | base64 -d > ~/.ssh/id_rsa
             chmod 600 ~/.ssh/id_rsa
           else
             echo "SSH private key id_rsa already exists, skipping overwrite"
           fi
   
           if [ ! -f ~/.ssh/droplet_id_rsa ]; then
-            echo "${{ env.DEPLOY_SSH_KEY }}" > ~/.ssh/droplet_id_rsa
+            echo "${{ env.DEPLOY_SSH_KEY }}" | base64 -d > ~/.ssh/droplet_id_rsa
             chmod 600 ~/.ssh/id_rsa
           else
             echo "SSH private key droplet_id_rsa already exists, skipping overwrite"
