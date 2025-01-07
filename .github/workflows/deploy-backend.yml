@@ -21,7 +21,7 @@ jobs:
 
     strategy:
       matrix:
-        environment: [staging,  production]
+        environment: [staging] # Add production afterwards
         branch: [backend-development, main]
 
     steps:
