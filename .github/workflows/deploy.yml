@@ -81,12 +81,12 @@ jobs:
         run: |
           if [[ "${{ matrix.branch }}" == "frontend-development" || "${{ matrix.branch }}" == "main" ]]; then
             echo "Deploying Frontend"
-            # cd frontend
+            cd frontend
           else
             echo "Deploying Backend"
             cd backend
           fi
-          npm install
+          npm install || true
 
       - name: Build Application
         run: |
