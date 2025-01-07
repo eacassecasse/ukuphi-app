@@ -45,6 +45,38 @@ jobs:
         with:
           node-version: 20
 
+      - name: Setup SSH Key for authentication
+        run: |
+          echo "Setting up SSH key..."
+          mkdir -p ~/.ssh
+  
+          if [ ! -f ~/.ssh/id_rsa ]; then
+            echo "${{ env.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+          else
+            echo "SSH private key id_rsa already exists, skipping overwrite"
+          fi
+  
+          if [ ! -f ~/.ssh/droplet_id_rsa ]; then
+            echo "${{ env.DEPLOY_SSH_KEY }}" > ~/.ssh/droplet_id_rsa
+            chmod 600 ~/.ssh/id_rsa
+          else
+            echo "SSH private key droplet_id_rsa already exists, skipping overwrite"
+          fi
+  
+          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ matrix.environment == 'staging' && env.STAGING_SERVER || env.PRODUCTION_SERVER }} >> ~/.ssh/known_hosts
+          echo "SSH key setup completed."
+  
+      - name: Debug Runner Directory
+        run: |
+          echo "Inspecting /home/runner directory..."
+          ls -la /home/runner
+          echo "Inspecting /home/runner/.ssh directory..."
+          ls -la /home/runner/.ssh
+          echo "Inspecting /home/runner/work directory..."
+          ls -la /home/runner/work
+
       - name: Install Dependencies
         run: |
           if [[ "${{ matrix.branch }}" == "frontend-development" || "${{ matrix.branch }}" == "main" ]]; then
@@ -55,38 +87,6 @@ jobs:
             cd backend
           fi
           npm install
-
-      - name: Setup SSH Key for authentication
-        run: |
-          echo "Setting up SSH key..."
-          mkdir -p ~/.ssh
-
-          if [ ! -f ~/.ssh/id_rsa ]; then
-            echo "${{ env.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
-            chmod 600 ~/.ssh/id_rsa
-          else
-            echo "SSH private key id_rsa already exists, skipping overwrite"
-          fi
-
-          if [ ! -f ~/.ssh/droplet_id_rsa ]; then
-            echo "${{ env.DEPLOY_SSH_KEY }}" > ~/.ssh/droplet_id_rsa
-            chmod 600 ~/.ssh/id_rsa
-          else
-            echo "SSH private key droplet_id_rsa already exists, skipping overwrite"
-          fi
-
-          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-          ssh-keyscan -H ${{ matrix.environment == 'staging' && env.STAGING_SERVER || env.PRODUCTION_SERVER }} >> ~/.ssh/known_hosts
-          echo "SSH key setup completed."
-
-      - name: Debug Runner Directory
-        run: |
-          echo "Inspecting /home/runner directory..."
-          ls -la /home/runner
-          echo "Inspecting /home/runner/.ssh directory..."
-          ls -la /home/runner/.ssh
-          echo "Inspecting /home/runner/work directory..."
-          ls -la /home/runner/work
 
       - name: Build Application
         run: |
