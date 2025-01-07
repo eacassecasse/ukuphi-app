@@ -22,8 +22,7 @@ jobs:
     strategy:
       matrix:
         environment: [staging] # Add production afterwards 
-        branch: [backend-development, main]
-
+        branch: [backend-development] # Add main when is ready for production
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
