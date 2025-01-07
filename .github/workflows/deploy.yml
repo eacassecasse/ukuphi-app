@@ -76,7 +76,7 @@ jobs:
           fi
 
           ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-          ssh-keyscan -H ${{ matrix.environment == 'staging' && env.STAGING_SERVER || env.PRODUCTION_SERVER }} >>/.ssh/known_hosts
+          ssh-keyscan -H ${{ matrix.environment == 'staging' && env.STAGING_SERVER || env.PRODUCTION_SERVER }} >> ~/.ssh/known_hosts
           echo "SSH key setup completed."
 
       - name: Build Application
