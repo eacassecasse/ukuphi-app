@@ -73,7 +73,7 @@ jobs:
           echo "Listing all directories..."
           ls -la
           echo "Listing frontend directory..."
-          ls -la frontend || echo "Frontend directory not found
+          ls -la frontend || echo "Frontend directory not found"
           echo "Listing backend directory..."
           ls -la backend || echo "Backend directory not found"
 
