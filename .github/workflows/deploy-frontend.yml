@@ -1,0 +1,122 @@
+name: Deploy Ukhupi App
+
+on:
+  push:
+    branches:
+      - main
+      - frontend-development
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      STAGING_SERVER: ${{ secrets.STAGING_IP }}
+      PRODUCTION_SERVER: ${{ secrets.PRODUCTION_IP }}
+      DEPLOY_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+      USER: ${{ secrets.DEPLOY_USER }}
+      REPO_URL: ${{ secrets.REPO_URL }}
+      APP_NAME: ukhupi-app
+      BASE_PATH: /var/www/ukhupi-app
+
+    strategy:
+      matrix:
+        environment: [staging, production]
+        branch: [backend-development, frontend-development, main]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Determine Deployment Path
+        id: deployment_path
+        run: |
+          if [[ "${{ matrix.branch }}" == "main" ]]; then
+            echo "path=production" >> $GITHUB_ENV
+            echo "host=${{ env.PRODUCTION_SERVER }}" >> $GITHUB_ENV
+          else
+            echo "path=staging" >> $GITHUB_ENV
+            echo "host=${{ env.STAGING_SERVER }}" >> $GITHUB_ENV
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Setup SSH Key for authentication
+        run: |
+          echo "Setting up SSH key..."
+          mkdir -p ~/.ssh
+  
+          if [ ! -f ~/.ssh/id_rsa ]; then
+            echo "${{ env.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+          else
+            echo "SSH private key id_rsa already exists, skipping overwrite"
+          fi
+  
+          if [ ! -f ~/.ssh/droplet_id_rsa ]; then
+            echo "${{ env.DEPLOY_SSH_KEY }}" > ~/.ssh/droplet_id_rsa
+            chmod 600 ~/.ssh/id_rsa
+          else
+            echo "SSH private key droplet_id_rsa already exists, skipping overwrite"
+          fi
+  
+          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ matrix.environment == 'staging' && env.STAGING_SERVER || env.PRODUCTION_SERVER }} >> ~/.ssh/known_hosts
+          echo "SSH key setup completed."
+  
+      - name: Debug Runner Directory
+        run: |
+          echo "Listing all directories..."
+          ls -la
+          echo "Listing frontend directory..."
+          ls -la frontend || echo "Frontend directory not found"
+
+      - name: Install Dependencies
+        run: |
+          if [[ "${{ matrix.branch }}" == "frontend-development" || "${{ matrix.branch }}" == "main" ]]; then
+            echo "Deploying Frontend"
+            cd frontend
+            npm install
+
+      - name: Build Application
+        run: |
+          if [[ "${{ matrix.branch }}" == "frontend-development" || "${{ matrix.branch }}" == "main" ]]; then
+            cd frontend
+            npm run build
+
+      - name: Deploy Application
+        run: |
+          echo "Starting deployment to ${{ matrix.environment }}..."
+          ssh -o StrictHostKeyChecking=no ${{ env.USER }}@$host << 'EOF'
+            # Define environment paths
+            APP_PATH="${{ env.BASE_PATH }}/${{ matrix.environment }}/frontend"
+            REPO_PATH="$APP_PATH/releases/$(date +'%Y%m%d%H%M%S')"
+
+            # Create necessary directories
+            mkdir -p $APP_PATH/releases
+            mkdir -p $APP_PATH/shared
+
+            # Clone or pull the repository
+            if [[ ! -d "$REPO_PATH" ]]; then
+              git clone ${{ env.REPO_URL }} $REPO_PATH
+            else
+              cd $REPO_PATH
+              git pull origin ${{ matrix.branch }}
+            fi
+
+            # Set the 'current' symlink to the new release
+            ln -sfn $REPO_PATH $APP_PATH/current
+
+            # Install dependencies and start/restart the application
+            cd $APP_PATH/current
+            npm install --production
+            if [[ "${{ matrix.branch }}" == "frontend-development" || "${{ matrix.branch }}" == "main" ]]; then
+              pm2 restart "ukuphi-frontend-${{ matrix.environment }}" || pm2 start build --name "ukuphi-frontend-${{ matrix.environment }}"
+            else
+              pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start index.js --name "ukuphi-backend-${{ matrix.environment }}"
+            fi
+          EOF
+          

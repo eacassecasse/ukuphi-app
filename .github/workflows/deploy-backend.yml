@@ -1,11 +1,10 @@
-name: Deploy Ukhupi App
+name: Deploy Backend Ukhupi App
 
 on:
   push:
     branches:
       - main
       - backend-development
-      - frontend-development
 
 jobs:
   deploy:
@@ -22,8 +21,8 @@ jobs:
 
     strategy:
       matrix:
-        environment: [staging] # Adding production after staging passes
-        branch: [backend-development, frontend-development, main]
+        environment: [staging,  production]
+        branch: [backend-development, main]
 
     steps:
       - name: Checkout Code
@@ -72,8 +71,6 @@ jobs:
         run: |
           echo "Listing all directories..."
           ls -la
-          echo "Listing frontend directory..."
-          ls -la frontend || echo "Frontend directory not found"
           echo "Listing backend directory..."
           ls -la backend || echo "Backend directory not found"
 
@@ -86,7 +83,7 @@ jobs:
             echo "Deploying Backend"
             cd backend
           fi
-          npm install || true
+          npm install
 
       - name: Build Application
         run: |
@@ -95,7 +92,7 @@ jobs:
             npm run build
           else
             cd backend
-            npm run build || true
+            npm run build
           fi
 
       - name: Deploy Application
