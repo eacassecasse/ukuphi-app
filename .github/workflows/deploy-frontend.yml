@@ -1,4 +1,4 @@
-name: Deploy Ukhupi App
+name: Deploy Frontend Ukhupi App
 
 on:
   push:

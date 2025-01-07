@@ -76,31 +76,21 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          if [[ "${{ matrix.branch }}" == "frontend-development" || "${{ matrix.branch }}" == "main" ]]; then
-            echo "Deploying Frontend"
-            cd frontend
-          else
-            echo "Deploying Backend"
-            cd backend
-          fi
+          echo "Installing dependencies..."
+          cd backend
           npm install
 
       - name: Build Application
         run: |
-          if [[ "${{ matrix.branch }}" == "frontend-development" || "${{ matrix.branch }}" == "main" ]]; then
-            cd frontend
-            npm run build
-          else
-            cd backend
-            npm run build
-          fi
+          cd backend
+          npm run build
 
       - name: Deploy Application
         run: |
           echo "Starting deployment to ${{ matrix.environment }}..."
           ssh -o StrictHostKeyChecking=no ${{ env.USER }}@$host << 'EOF'
             # Define environment paths
-            APP_PATH="${{ env.BASE_PATH }}/${{ matrix.environment }}"
+            APP_PATH="${{ env.BASE_PATH }}/${{ matrix.environment }}/backend"
             REPO_PATH="$APP_PATH/releases/$(date +'%Y%m%d%H%M%S')"
 
             # Create necessary directories
@@ -121,10 +111,6 @@ jobs:
             # Install dependencies and start/restart the application
             cd $APP_PATH/current
             npm install --production
-            if [[ "${{ matrix.branch }}" == "frontend-development" || "${{ matrix.branch }}" == "main" ]]; then
-              pm2 restart "ukuphi-frontend-${{ matrix.environment }}" || pm2 start build --name "ukuphi-frontend-${{ matrix.environment }}"
-            else
-              pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start index.js --name "ukuphi-backend-${{ matrix.environment }}"
-            fi
+            pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start index.js --name "ukuphi-backend-${{ matrix.environment }}"
           EOF
           
