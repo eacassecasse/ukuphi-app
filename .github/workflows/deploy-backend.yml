@@ -114,8 +114,8 @@ jobs:
             cp $APP_PATH/shared/.env $APP_PATH/current/backend/.env
 
             # Add .env to .gitignore if it's not already present
-            if ! grep -q ".env" $APP_PATH/current/backend/.gitignore; then
-              echo ".env" >> $APP_PATH/current/backend/.gitignore
+            if ! grep -q ".env" $BACKEND_PATH/.gitignore; then
+              echo ".env" >> $BACKEND_PATH/.gitignore
               echo ".env added to .gitignore"
             else
               echo ".env already in .gitignore, skipping..."
