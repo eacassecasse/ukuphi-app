@@ -1,106 +1,235 @@
-import { PrismaClient } from '@prisma/client';
+import {
+  PrismaClient,
+  Role,
+  Payment_Method,
+  Payment_Status,
+  Notification_Type,
+  Notification_Status,
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Seeding...');
-
-  // Seed data for users
-  await prisma.user.createMany({
+  // Create Admin, Organizer, and Attendee users
+  const users = await prisma.user.createMany({
     data: [
-      { id: '1', name: 'Alice Johnson', email: 'alice@example.com', phone: '1234567890', password: 'password1', role: 'ORGANIZER' },
-      { id: '2', name: 'Bob Smith', email: 'bob@example.com', phone: '2345678901', password: 'password2', role: 'ATTENDEE' },
-      { id: '3', name: 'Catherine Davis', email: 'catherine@example.com', phone: '3456789012', password: 'password3', role: 'ADMIN' },
-      { id: '4', name: 'David Lee', email: 'david@example.com', phone: '4567890123', password: 'password4', role: 'ATTENDEE' },
-      { id: '5', name: 'Eva White', email: 'eva@example.com', phone: '5678901234', password: 'password5', role: 'ORGANIZER' },
+      {
+        name: "Edmilson de Azevedo",
+        email: "edmilsoncassecasse25@gmail.com",
+        password: "33645766",
+        role: Role.ADMIN,
+        verified: false,
+        phone: "+258870616620",
+      },
+      {
+        name: "Linson DMT",
+        email: "yonnival0.8@gmail.com",
+        password: "96664825",
+        role: Role.ADMIN,
+        verified: true,
+      },
+      {
+        name: "Nkeiru Lois",
+        email: "nkeirulois8@gmail.com",
+        password: "6534785647",
+        role: Role.ORGANIZER,
+        verified: true,
+      },
+      {
+        name: "Kessiena Arhata-Obehi",
+        email: "organizer2@example.com",
+        password: "53774362",
+        role: Role.ORGANIZER,
+        verified: true,
+      },
+      {
+        name: "Attendee User 1",
+        email: "attendee1@example.com",
+        password: "hashed-password",
+        role: Role.ATTENDEE,
+        verified: false,
+      },
+      {
+        name: "Attendee User 2",
+        email: "attendee2@example.com",
+        password: "hashed-password",
+        role: Role.ATTENDEE,
+        verified: false,
+      },
+      {
+        name: "Attendee User 3",
+        email: "attendee3@example.com",
+        password: "hashed-password",
+        role: Role.ATTENDEE,
+        verified: false,
+      },
     ],
   });
 
-  // Seed data for events
-  await prisma.event.createMany({
+  // Create Events with embedded Tickets and Payments
+  const events = await Promise.all([
+    prisma.event.create({
+      data: {
+        title: "Sample Event 1",
+        description: "Sample description for event 1",
+        location: "Location 1",
+        image_url: "https://via.placeholder.com/150",
+        date: new Date("2025-12-01T10:00:00Z"),
+        organizerId: users[0].id,
+        tickets: {
+          create: [
+            {
+              type: "Ticket Type 1",
+              price: 50,
+              existingQuantity: 100,
+              payments: {
+                create: [
+                  {
+                    userId: users[5].id,
+                    amount: 50,
+                    method: Payment_Method.CREDIT_CARD,
+                    status: Payment_Status.CONFIRMED,
+                    qr_code: "sample-qr-code-1",
+                  },
+                ],
+              },
+            },
+            {
+              type: "Ticket Type 2",
+              price: 60,
+              existingQuantity: 100,
+              payments: {
+                create: [
+                  {
+                    userId: users[6].id,
+                    amount: 60,
+                    method: Payment_Method.DEBIT_CARD,
+                    status: Payment_Status.PENDING,
+                    qr_code: "sample-qr-code-2",
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    }),
+    prisma.event.create({
+      data: {
+        title: "Sample Event 2",
+        description: "Sample description for event 2",
+        location: "Location 2",
+        image_url: "https://via.placeholder.com/150",
+        date: new Date("2025-12-05T14:00:00Z"),
+        organizerId: users[2].id,
+        tickets: {
+          create: [
+            {
+              type: "Ticket Type 1",
+              price: 50,
+              existingQuantity: 100,
+              payments: {
+                create: [
+                  {
+                    userId: users[4].id,
+                    amount: 50,
+                    method: Payment_Method.CREDIT_CARD,
+                    status: Payment_Status.CONFIRMED,
+                    qr_code: "sample-qr-code-3",
+                  },
+                ],
+              },
+            },
+            { type: "Ticket Type 2", price: 60, existingQuantity: 100 },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  // Create Notifications
+  const notifications = await prisma.notification.createMany({
     data: [
-      { id: '1', organizerId: '1', title: 'Tech Conference 2024', description: 'A conference about tech trends.', location: 'San Francisco', image_url: 'http://example.com/img1.jpg', tickets_sold: 150, date: new Date('2024-08-01 09:00:00') },
-      { id: '2', organizerId: '1', title: 'AI Summit', description: 'Exploring the future of AI.', location: 'New York', image_url: 'http://example.com/img2.jpg', tickets_sold: 200, date: new Date('2024-09-15 10:00:00') },
-      { id: '3', organizerId: '5', title: 'Startup Workshop', description: 'Learn how to launch startups.', location: 'Los Angeles', image_url: 'http://example.com/img3.jpg', tickets_sold: 50, date: new Date('2024-10-20 14:00:00') },
-      { id: '4', organizerId: '5', title: 'Design Expo', description: 'Showcasing modern designs.', location: 'Seattle', image_url: 'http://example.com/img4.jpg', tickets_sold: 100, date: new Date('2024-11-05 16:00:00') },
-      { id: '5', organizerId: '1', title: 'Coding Bootcamp', description: 'Intensive programming training.', location: 'Austin', image_url: 'http://example.com/img5.jpg', tickets_sold: 300, date: new Date('2024-12-01 08:00:00') },
+      {
+        userId: users[0].id,
+        message: "Event 1 Created",
+        type: Notification_Type.INFO,
+        status: Notification_Status.UNREAD,
+        sentAt: new Date(),
+      },
+      {
+        userId: users[1].id,
+        message: "Event 2 Created",
+        type: Notification_Type.INFO,
+        status: Notification_Status.UNREAD,
+        sentAt: new Date(),
+      },
     ],
   });
 
-  // Seed data for tickets
-  await prisma.ticket.createMany({
+  // Create Posts with Tags and Comments
+  const posts = await prisma.post.createMany({
     data: [
-      { id: '1', existingQuantity: 750, eventId: '1', type: 'Standard', price: 50.0 },
-      { id: '2', existingQuantity: 200, eventId: '1', type: 'VIP', price: 100.0 },
-      { id: '3', existingQuantity: 500, eventId: '2', type: 'Standard', price: 75.0 },
-      { id: '4', existingQuantity: 1200, eventId: '3', type: 'Standard', price: 30.0 },
-      { id: '5', existingQuantity: 120, eventId: '4', type: 'VIP', price: 120.0 },
+      {
+        authorId: users[0].id,
+        title: "Blog Post 1",
+        content: "Content for Blog Post 1.",
+        featured_image: "https://via.placeholder.com/150",
+        publishedAt: new Date(),
+      },
+      {
+        authorId: users[1].id,
+        title: "Blog Post 2",
+        content: "Content for Blog Post 2.",
+        featured_image: "https://via.placeholder.com/150",
+        publishedAt: new Date(),
+      },
     ],
   });
 
-  // Seed data for payments
-  await prisma.payment.createMany({
+  // Add Tags to Posts
+  const tags = await prisma.tag.createMany({
     data: [
-      { id: '1', userId: '1', ticketId: '1', amount: 50.0, method: 'DEBIT_CARD', status: 'CONFIRMED', qr_code: 'QR1', created_at: new Date('2024-07-01 12:00:00') },
-      { id: '2', userId: '2',ticketId: '2', amount: 100.0, method: 'CREDIT_CARD', status: 'CONFIRMED', qr_code: 'QR2', created_at: new Date('2024-07-02 14:30:00') },
-      { id: '3', userId: '1', ticketId: '3', amount: 75.0, method: 'MOBILE_WALLET', status: 'PENDING', qr_code: 'QR3', created_at: new Date('2024-07-03 16:45:00') },
-      { id: '4', userId: '3', ticketId: '4', amount: 30.0, method: 'DEBIT_CARD', status: 'CONFIRMED', qr_code: 'QR4', created_at: new Date('2024-07-04 18:00:00') },
-      { id: '5', userId: '5', ticketId: '5', amount: 120.0, method: 'CREDIT_CARD', status: 'CONFIRMED', qr_code: 'QR5', created_at: new Date('2024-07-05 20:15:00') },
+      { postId: posts[0].id, content: "Tag 1" },
+      { postId: posts[0].id, content: "Tag 2" },
+      { postId: posts[1].id, content: "Tag 3" },
     ],
   });
 
-  // Seed data for notifications
-  await prisma.notification.createMany({
+  // Create Comments for Posts
+  const comments = await prisma.comment.createMany({
     data: [
-      { id: '1', userId: '1', message: 'Event Tech Conference 2024 is near.', type: 'INFO', sentAt: new Date('2024-07-30 08:00:00') },
-      { id: '2', userId: '2', message: 'Your ticket for AI Summit is confirmed.', type: 'INFO', sentAt: new Date('2024-07-15 09:00:00') },
-      { id: '3', userId: '3', message: 'Admin meeting scheduled.', type: 'INFO', sentAt: new Date('2024-07-20 10:30:00') },
-      { id: '4', userId: '4', message: 'Welcome to the platform!', type: 'INFO', sentAt: new Date('2024-07-10 15:00:00') },
-      { id: '5', userId: '5', message: 'Startup Workshop registration ends soon.', type: 'INFO', sentAt: new Date('2024-07-25 17:00:00') },
+      {
+        userId: users[5].id,
+        title: "Comment 1 for Post",
+        content: "Content for Comment 1.",
+        commentedAt: new Date(),
+      },
+      {
+        userId: users[6].id,
+        title: "Comment 2 for Post",
+        content: "Content for Comment 2.",
+        commentedAt: new Date(),
+      },
     ],
   });
 
-  // Seed data for posts
-  await prisma.post.createMany({
+  // Link Comments to Posts
+  const postComments = await prisma.post_Comment.createMany({
     data: [
-      { id: '1', authorId: '1', title: 'Tech Revolution', content: 'A deep dive into technology.', featured_image: 'http://example.com/post1.jpg', publishedAt: new Date('2024-06-01 10:00:00') },
-      { id: '2', authorId: '2', title: 'AI Ethics', content: 'Ethical considerations of AI.', featured_image: 'http://example.com/post2.jpg', publishedAt: new Date('2024-06-05 11:30:00') },
-      { id: '3', authorId: '3', title: 'Startup Growth', content: 'Tips for scaling startups.', featured_image: 'http://example.com/post3.jpg', publishedAt: new Date('2024-06-10 14:00:00') },
-      { id: '4', authorId: '4', title: 'Design Patterns', content: 'Modern UI/UX patterns.', featured_image: 'http://example.com/post4.jpg', publishedAt: new Date('2024-06-15 16:00:00') },
-      { id: '5', authorId: '5', title: 'Code Optimization', content: 'Writing efficient code.', featured_image: 'http://example.com/post5.jpg', publishedAt: new Date('2024-06-20 18:30:00') },
+      { postId: posts[0].id, commentId: comments[0].id },
+      { postId: posts[1].id, commentId: comments[1].id },
     ],
   });
 
-  // Seed data for tags
-  await prisma.tag.createMany({
-    data: [
-      { id: '1', content: 'Technology', postId: '1' },
-      { id: '2', content: 'AI', postId: '2' },
-      { id: '3', content: 'Startup', postId: '3' },
-      { id: '4', content: 'Design', postId: '4' },
-      { id: '5', content: 'Coding', postId: '5' },
-    ],
-  });
-
-  // Seed data for comments
-  await prisma.comment.createMany({
-    data: [
-      { id: '1', userId: '2', title: 'Great Event!', content: 'I loved the AI Summit.', commentedAt: new Date('2024-07-01 13:00:00') },
-      { id: '2', userId: '3', title: 'Helpful Post', content: 'Thanks for the startup tips.', commentedAt: new Date('2024-07-05 14:30:00') },
-      { id: '3', userId: '4', title: 'Well Organized', content: 'The Tech Conference was amazing.', commentedAt: new Date('2024-07-10 16:00:00') },
-      { id: '4', userId: '5', title: 'Exciting!', content: 'Looking forward to Design Expo.', commentedAt: new Date('2024-07-15 18:30:00') },
-      { id: '5', userId: '1', title: 'Good Read', content: 'The post on AI Ethics is thought-provoking.', commentedAt: new Date('2024-07-20 20:00:00') },
-    ],
-  });
-
-  console.log('Seeding completed.');
+  console.log("Seeding completed!");
 }
 
-// main()
-//   .catch(e => {
-//     console.error(e);
-//     process.exit(1);
-//   })
-//   .finally(async () => {
-//     await prisma.$disconnect();
-//   });
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

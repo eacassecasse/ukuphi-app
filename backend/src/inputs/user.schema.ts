@@ -19,7 +19,7 @@ const userCore = z.object({
     .regex(/^\+?[1-9]\d{1,14}$/, {
       message:
         "Phone number must be a valid international format (e.g., +1234567890)",
-    }),
+    }).optional(),
   role: z
     .enum(["ORGANIZER", "ATTENDEE", "ADMIN"], {
       invalid_type_error: "Role must be one of: organizer, admin, attendee",
