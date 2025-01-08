@@ -111,7 +111,7 @@ jobs:
               exit 1
             fi
 
-            cp $APP_PATH/shared/.env $APP_PATH/current/backend/.env
+            cp $APP_PATH/shared/.env $BACKEND_PATH/.env
 
             # Add .env to .gitignore if it's not already present
             if ! grep -q ".env" $BACKEND_PATH/.gitignore; then
