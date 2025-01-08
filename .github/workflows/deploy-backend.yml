@@ -102,7 +102,9 @@ jobs:
               git clone ${{ env.REPO_URL }} $REPO_PATH
             else
               cd $REPO_PATH
-              git pull origin ${{ matrix.branch }}
+              git fetch origin
+              git checkout ${{ matrix.branch }}
+              git reset --hard origin/${{ matrix.branch }}
             fi
 
             # Ensure backend folder exists
@@ -129,7 +131,7 @@ jobs:
             # Install dependencies and start/restart the application
             cd $APP_PATH/current/backend
             npm install --omit=dev --loglevel=error
-            pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start dist/index.js --name "ukuphi-backend-${{ matrix.environment }}"
-
+            pm2 delete "ukuphi-backend-${{ matrix.environment }}" || true
+            pm2 start dist/index.js --name "ukuphi-backend-${{ matrix.environment }}" --update-env
           EOF
           
