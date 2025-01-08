@@ -9,7 +9,9 @@ import { authenticate } from "./plugins/authenticate";
 import { routes } from "./routes";
 import { registerErrorHandler } from "./plugins/errorHandler";
 
-dotenv.config();
+dotenv.config({
+  path: "../.env",
+});
 
 export const fastify = Fastify({
   logger: true,
@@ -45,8 +47,7 @@ fastify.register(rateLimit, {
 
 //Routes
 fastify.get("/hello", async (req, res) => {
-  console.log(process.env);
-  return { message: "Hello world!" };
+  return { message: "Hello world!", proc: process.env };
 });
 
 fastify.register(routes, { prefix: "/api/v1" });
@@ -54,7 +55,7 @@ fastify.register(routes, { prefix: "/api/v1" });
 async function bootstrap() {
   try {
     await fastify.listen({
-      port: parseInt(process.env.PORT || '5000'),
+      port: parseInt(process.env.PORT || "5000"),
       host: "0.0.0.0",
     });
 
