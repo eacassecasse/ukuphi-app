@@ -43,6 +43,11 @@ const Header = () => {
               Contact
             </Link>
           </li>
+          <li>
+            <Link to="/purchase-ticket" className="hover:text-orange-400">
+              Purchase Ticket
+            </Link>
+          </li>
         </ul>
       </nav>
 
