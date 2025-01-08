@@ -102,7 +102,6 @@ jobs:
               git clone ${{ env.REPO_URL }} $REPO_PATH
             else
               cd $REPO_PATH
-              git checkout ${{ matrix.branch}}
               git pull origin ${{ matrix.branch }}
             fi
 
