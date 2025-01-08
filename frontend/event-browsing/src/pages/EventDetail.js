@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Link } from "react-router-dom";
+import { useParams, Link } from 'react-router-dom';
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -11,7 +10,6 @@ const EventDetail = () => {
   useEffect(() => {
     const fetchEventData = async () => {
       try {
-        // In a real application, replace this with an actual API call
         const response = await fetch(`/api/events/${id}`);
         if (!response.ok) {
           throw new Error('Event not found');
@@ -28,9 +26,17 @@ const EventDetail = () => {
     fetchEventData();
   }, [id]);
 
-  if (loading) return <div className="container mx-auto px-4 py-8">Loading...</div>;
-  if (error) return <div className="container mx-auto px-4 py-8 text-red-500">{error}</div>;
-  if (!event) return <div className="container mx-auto px-4 py-8">Event not found</div>;
+  if (loading) {
+    return <div className="container mx-auto px-4 py-8">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="container mx-auto px-4 py-8 text-red-500">{error}</div>;
+  }
+
+  if (!event) {
+    return <div className="container mx-auto px-4 py-8">Event not found</div>;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -49,7 +55,8 @@ const EventDetail = () => {
           <p className="text-gray-600 mb-4">Organizer: {event.organizer}</p>
           <p className="text-gray-700 mb-6">{event.description}</p>
 
-          <Link to="/purchase-ticket">
+          {/* Buy Tickets Button */}
+          <Link to={`/purchase-ticket?eventId=${id}`}>
             <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4">
               Buy Tickets
             </button>
@@ -66,6 +73,7 @@ const EventDetail = () => {
             ></iframe>
           </div>
 
+          {/* Social Media Sharing */}
           <div className="flex space-x-4">
             <a
               href={`https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`}
@@ -91,4 +99,3 @@ const EventDetail = () => {
 };
 
 export default EventDetail;
-

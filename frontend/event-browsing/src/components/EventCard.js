@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom"; // Import Link
 
 const EventCard = ({ event }) => {
   return (
@@ -9,7 +10,11 @@ const EventCard = ({ event }) => {
         <p>{event.location}</p>
         <p>{event.date}</p>
         <p>{event.price}</p>
-        <button className="bg-blue-500 text-white px-4 py-2 mt-2 hover:bg-orange-700">{event.buttonText}</button>
+        <Link to={`/purchase-ticket?eventId=${event.id}`}> 
+          <button className="bg-blue-500 text-white px-4 py-2 mt-2 hover:bg-orange-700">
+            {event.buttonText}
+          </button>
+        </Link>
       </div>
     </div>
   );

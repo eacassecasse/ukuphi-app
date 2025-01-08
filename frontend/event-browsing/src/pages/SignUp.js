@@ -34,8 +34,8 @@ const SignUp = () => {
   };
 
   return (
-    <AuthLayout 
-      title="Sign Up to Ukuphi" 
+    <AuthLayout
+      title="Sign Up to Ukuphi"
       subtitle="Join our community and start discovering amazing events"
       isSignIn={false}
     >

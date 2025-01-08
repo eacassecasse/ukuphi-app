@@ -5,11 +5,11 @@ const Header = () => {
   return (
     <header className="bg-blue-800 text-white p-4 flex justify-between items-center">
       <div className="logo">
-      <Link to="/">
-  <span className="h-12 bg-gradient-to-r from-orange-500 to-blue-400 bg-clip-text text-transparent font-extrabold text-3xl">
-    UKUPHI
-  </span>
-</Link>
+        <Link to="/">
+          <span className="h-12 bg-gradient-to-r from-orange-500 to-blue-400 bg-clip-text text-transparent font-extrabold text-3xl">
+            UKUPHI
+          </span>
+        </Link>
       </div>
       <nav className="main-nav flex items-center space-x-6">
         <ul className="flex space-x-6">
@@ -29,6 +29,11 @@ const Header = () => {
             </Link>
           </li>
           <li>
+            <Link to="/purchase-ticket" className="hover:text-orange-400">
+              Purchase Ticket
+            </Link>
+          </li>
+          <li>
             <Link to="/about" className="hover:text-orange-400">
               About Us
             </Link>
@@ -41,11 +46,6 @@ const Header = () => {
           <li>
             <Link to="/contact" className="hover:text-orange-400">
               Contact
-            </Link>
-          </li>
-          <li>
-            <Link to="/purchase-ticket" className="hover:text-orange-400">
-              Purchase Ticket
             </Link>
           </li>
         </ul>
