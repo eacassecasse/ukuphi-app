@@ -112,7 +112,7 @@ jobs:
             fi
 
             cp $APP_PATH/shared/.env $BACKEND_PATH/.env
-            chmod 644 $BACKEND_PATH/.env
+            chmod 600 $BACKEND_PATH/.env
             chown -R ${{ env.USER }}:${{ env.USER }} $BACKEND_PATH/.env
 
             # Add .env to .gitignore if it's not already present
@@ -129,7 +129,7 @@ jobs:
             # Install dependencies and start/restart the application
             cd $APP_PATH/current/backend
             npm install --omit=dev --loglevel=error
-            pm2 delete "ukuphi-backend-${{ matrix.environment }}" || true
-            pm2 start dist/index.js --name "ukuphi-backend-${{ matrix.environment }}"
+            pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start dist/index.js --name "ukuphi-backend-${{ matrix.environment }}"
+
           EOF
           
