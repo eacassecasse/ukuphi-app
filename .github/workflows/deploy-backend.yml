@@ -131,6 +131,6 @@ jobs:
             cd $APP_PATH/current/backend
             npm install --omit=dev --loglevel=error
             pm2 delete "ukuphi-backend-${{ matrix.environment }}" || true
-            pm2 start dist/index.js --name "ukuphi-backend-${{ matrix.environment }}" --update-env
+            pm2 start dist/index.js --name "ukuphi-backend-${{ matrix.environment }}"
           EOF
           
