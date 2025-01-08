@@ -45,7 +45,7 @@ fastify.register(rateLimit, {
 
 //Routes
 fastify.get("/hello", async (req, res) => {
-  consoel.log(process.env)
+  console.log(process.env);
   return { message: "Hello world!" };
 });
 
