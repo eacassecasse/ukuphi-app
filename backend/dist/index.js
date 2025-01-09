@@ -47,7 +47,9 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const authenticate_1 = require("./plugins/authenticate");
 const routes_1 = require("./routes");
 const errorHandler_1 = require("./plugins/errorHandler");
-dotenv_1.default.config();
+dotenv_1.default.config({
+    path: "../.env",
+});
 exports.fastify = (0, fastify_1.default)({
     logger: true,
 });
@@ -76,13 +78,13 @@ exports.fastify.register(fastify_rate_limiter_1.default, {
 });
 //Routes
 exports.fastify.get("/hello", async (req, res) => {
-    return { message: "Hello world!" };
+    return { message: "Hello world!", proc: process.env };
 });
 exports.fastify.register(routes_1.routes, { prefix: "/api/v1" });
 async function bootstrap() {
     try {
         await exports.fastify.listen({
-            port: parseInt(process.env.PORT || '5000'),
+            port: parseInt(process.env.PORT || "5000"),
             host: "0.0.0.0",
         });
         console.log("Server running on port 5000");
