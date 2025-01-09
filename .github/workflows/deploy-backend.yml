@@ -29,10 +29,10 @@ jobs:
       - name: Determine Deployment Path
         id: deployment_path
         run: |
-          if [[ "${{ matrix.environment }}" == "production" && "${{ github.ref_name }}" == "main"]]; then
+          if [[ "${{ matrix.environment }}" == "production" && "${{ github.ref_name }}" == "main" ]]; then
             echo "path=production" >> $GITHUB_ENV
             echo "host=${{ env.PRODUCTION_SERVER }}" >> $GITHUB_ENV
-          elif [[ "${{ matrix.environment }}" == "staging" && "${{ github.ref_name }}" == "backend-development"]]; then
+          elif [[ "${{ matrix.environment }}" == "staging" && "${{ github.ref_name }}" == "backend-development" ]]; then
             echo "path=staging" >> $GITHUB_ENV
             echo "host=${{ env.STAGING_SERVER }}" >> $GITHUB_ENV
           else
@@ -109,7 +109,7 @@ jobs:
 
             # Checkout the appropriate branch based on the environment
             cd $REPO_PATH
-            if [[ "${{ matrix.environment }}" == "staging"]]; then
+            if [[ "${{ matrix.environment }}" == "staging" ]]; then
               git checkout backend-development
               git pull origin backend-development
             else
