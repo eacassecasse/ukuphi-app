@@ -97,7 +97,7 @@ jobs:
           echo "Starting deployment to ${{ matrix.environment }}..."
           ssh -o StrictHostKeyChecking=no ${{ env.USER }}@$host << 'EOF'
             # Define environment paths
-            APP_PATH="${{ env.BASE_PATH }}/${{ matrix.environment }}/backend"
+            APP_PATH="${{ env.BASE_PATH }}/$path/backend"
             REPO_PATH="$APP_PATH/releases/$(date +'%Y%m%d%H%M%S')"
             BACKEND_PATH="$REPO_PATH/backend"
 
@@ -115,7 +115,7 @@ jobs:
 
             # Checkout the appropriate branch based on the environment
             cd $REPO_PATH
-            if [[ "${{ matrix.environment }}" == "staging" ]]; then
+            if [[ "$path" == "staging" ]]; then
               git checkout backend-development
               git pull origin backend-development
             else
