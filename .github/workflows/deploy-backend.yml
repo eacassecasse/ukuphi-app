@@ -21,8 +21,7 @@ jobs:
 
     strategy:
       matrix:
-        environment: [staging] # Add production afterwards 
-        branch: [backend-development] # Add main when is ready for production
+        environment: [staging, production] 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -30,12 +29,15 @@ jobs:
       - name: Determine Deployment Path
         id: deployment_path
         run: |
-          if [[ "${{ matrix.branch }}" == "main" ]]; then
+          if [[ "${{ matrix.environment }}" == "production" && "${{ github.ref_name }}" == "main"]]; then
             echo "path=production" >> $GITHUB_ENV
             echo "host=${{ env.PRODUCTION_SERVER }}" >> $GITHUB_ENV
-          else
+          elif [[ "${{ matrix.environment }}" == "staging" && "${{ github.ref_name }}" == "backend-development"]]; then
             echo "path=staging" >> $GITHUB_ENV
             echo "host=${{ env.STAGING_SERVER }}" >> $GITHUB_ENV
+          else
+            echo "Skipping deployment for this combination."
+            exit 0
           fi
 
       - name: Setup Node.js
@@ -63,7 +65,7 @@ jobs:
           fi
   
           ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-          ssh-keyscan -H ${{ matrix.environment == 'staging' && env.STAGING_SERVER || env.PRODUCTION_SERVER }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H $host >> ~/.ssh/known_hosts
           echo "SSH key setup completed."
   
       - name: Debug Runner Directory
@@ -102,7 +104,17 @@ jobs:
               git clone ${{ env.REPO_URL }} $REPO_PATH
             else
               cd $REPO_PATH
-              git pull origin ${{ matrix.branch }}
+              git fetch origin
+            fi
+
+            # Checkout the appropriate branch based on the environment
+            cd $REPO_PATH
+            if [[ "${{ matrix.environment }}" == "staging"]]; then
+              git checkout backend-development
+              git pull origin backend-development
+            else
+              git checkout main
+              git pull origin main
             fi
 
             # Ensure backend folder exists
@@ -112,7 +124,8 @@ jobs:
             fi
 
             cp $APP_PATH/shared/.env $BACKEND_PATH/.env
-            chmod 644 $BACKEND_PATH/.env
+            chmod 600 $BACKEND_PATH/.env
+            chown -R ${{ env.USER }}:${{ env.USER }} $BACKEND_PATH/.env
 
             # Add .env to .gitignore if it's not already present
             if ! grep -q ".env" $BACKEND_PATH/.gitignore; then
@@ -127,8 +140,19 @@ jobs:
 
             # Install dependencies and start/restart the application
             cd $APP_PATH/current/backend
-            npm install --omit=dev --loglevel=error
-            pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start dist/index.js --name "ukuphi-backend-${{ matrix.environment }}"
+            npm cache clean --force
+            timeout 300 npm install --omit=dev --loglevel=error || {
+              echo "npm install timeout or failure. Retrying with cache cleanup..."
+              npm cache clean --force
+              npm install --omit=dev --loglevel=error
+            }
 
+            # Managing process with pm2
+            PROCESS_NAME="ukuphi-backend-${{ matrix.environment }}"
+
+            if pm2 list | grep -q "$PROCESS_NAME"; then
+              pm2 delete "$PROCESS_NAME" || echo "Failed to delete pm2 process. Proceeding..."
+            fi
+            pm2 start dist/index.js --name "$PROCESS_NAME" --update-env || pm2 restart "$PROCESS_NAME" --update-env
           EOF
           
