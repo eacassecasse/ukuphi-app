@@ -112,7 +112,8 @@ jobs:
             fi
 
             cp $APP_PATH/shared/.env $BACKEND_PATH/.env
-            chmod 644 $BACKEND_PATH/.env
+            chmod 600 $BACKEND_PATH/.env
+            chown -R ${{ env.USER }}:${{ env.USER }} $BACKEND_PATH/.env
 
             # Add .env to .gitignore if it's not already present
             if ! grep -q ".env" $BACKEND_PATH/.gitignore; then
