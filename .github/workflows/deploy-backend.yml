@@ -21,7 +21,7 @@ jobs:
 
     strategy:
       matrix:
-        environment: [staging, production] 
+        environment: [staging] # Adding production afterwards 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
