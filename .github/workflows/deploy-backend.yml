@@ -21,7 +21,7 @@ jobs:
 
     strategy:
       matrix:
-        environment: [staging] # Adding production afterwards 
+        environment: [staging, production] 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -29,10 +29,10 @@ jobs:
       - name: Determine Deployment Path
         id: deployment_path
         run: |
-          if [[ "${{ matrix.environment }}" == "production" && "${{ github.ref_name }}" == "main" ]]; then
+          if [[ "${{ matrix.environment }}" == "production" ]]; then
             echo "path=production" >> $GITHUB_ENV
             echo "host=${{ env.PRODUCTION_SERVER }}" >> $GITHUB_ENV
-          elif [[ "${{ matrix.environment }}" == "staging" && "${{ github.ref_name }}" == "backend-development" ]]; then
+          elif [[ "${{ matrix.environment }}" == "staging" ]]; then
             echo "path=staging" >> $GITHUB_ENV
             echo "host=${{ env.STAGING_SERVER }}" >> $GITHUB_ENV
           else
@@ -63,9 +63,15 @@ jobs:
           else
             echo "SSH private key droplet_id_rsa already exists, skipping overwrite"
           fi
+
+          # Add the host dynamically to known_hosts
+          if [ -z "$host" ]; then
+            echo "Error: Host is not set. Check Determine Deployment Path step."
+            exit 1
+          fi
   
           ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-          ssh-keyscan -H $host >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$host" >> ~/.ssh/known_hosts
           echo "SSH key setup completed."
   
       - name: Debug Runner Directory
