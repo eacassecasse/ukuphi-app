@@ -21,8 +21,7 @@ jobs:
 
     strategy:
       matrix:
-        environment: [staging] # Add production afterwards 
-        branch: [backend-development] # Add main when is ready for production
+        environment: [staging, production] 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -30,12 +29,15 @@ jobs:
       - name: Determine Deployment Path
         id: deployment_path
         run: |
-          if [[ "${{ matrix.branch }}" == "main" ]]; then
+          if [[ "${{ matrix.environment }}" == "production" ]]; then
             echo "path=production" >> $GITHUB_ENV
             echo "host=${{ env.PRODUCTION_SERVER }}" >> $GITHUB_ENV
-          else
+          elif [[ "${{ matrix.environment }}" == "staging" ]]; then
             echo "path=staging" >> $GITHUB_ENV
             echo "host=${{ env.STAGING_SERVER }}" >> $GITHUB_ENV
+          else
+            echo "Skipping deployment for this combination."
+            exit 0
           fi
 
       - name: Setup Node.js
@@ -61,9 +63,15 @@ jobs:
           else
             echo "SSH private key droplet_id_rsa already exists, skipping overwrite"
           fi
+
+          # Add the host dynamically to known_hosts
+          if [ -z "$host" ]; then
+            echo "Error: Host is not set. Check Determine Deployment Path step."
+            exit 1
+          fi
   
           ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-          ssh-keyscan -H ${{ matrix.environment == 'staging' && env.STAGING_SERVER || env.PRODUCTION_SERVER }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$host" >> ~/.ssh/known_hosts
           echo "SSH key setup completed."
   
       - name: Debug Runner Directory
@@ -89,7 +97,7 @@ jobs:
           echo "Starting deployment to ${{ matrix.environment }}..."
           ssh -o StrictHostKeyChecking=no ${{ env.USER }}@$host << 'EOF'
             # Define environment paths
-            APP_PATH="${{ env.BASE_PATH }}/${{ matrix.environment }}/backend"
+            APP_PATH="${{ env.BASE_PATH }}/${{ env.path }}/backend"
             REPO_PATH="$APP_PATH/releases/$(date +'%Y%m%d%H%M%S')"
             BACKEND_PATH="$REPO_PATH/backend"
 
@@ -102,7 +110,17 @@ jobs:
               git clone ${{ env.REPO_URL }} $REPO_PATH
             else
               cd $REPO_PATH
-              git pull origin ${{ matrix.branch }}
+              git fetch origin
+            fi
+
+            # Checkout the appropriate branch based on the environment
+            cd $REPO_PATH
+            if [[ "${{ env.path }}" == "staging" ]]; then
+              git checkout backend-development
+              git pull origin backend-development
+            else
+              git checkout main
+              git pull origin main
             fi
 
             # Ensure backend folder exists
@@ -128,8 +146,19 @@ jobs:
 
             # Install dependencies and start/restart the application
             cd $APP_PATH/current/backend
-            npm install --omit=dev --loglevel=error
-            pm2 restart "ukuphi-backend-${{ matrix.environment }}" || pm2 start dist/index.js --name "ukuphi-backend-${{ matrix.environment }}"
+            npm cache clean --force
+            timeout 300 npm install --omit=dev --loglevel=error || {
+              echo "npm install timeout or failure. Retrying with cache cleanup..."
+              npm cache clean --force
+              npm install --omit=dev --loglevel=error
+            }
 
+            # Managing process with pm2
+            PROCESS_NAME="ukuphi-backend-${{ matrix.environment }}"
+
+            if pm2 list | grep -q "$PROCESS_NAME"; then
+              pm2 delete "$PROCESS_NAME" || echo "Failed to delete pm2 process. Proceeding..."
+            fi
+            pm2 start dist/index.js --name "$PROCESS_NAME" --update-env || pm2 restart "$PROCESS_NAME" --update-env
           EOF
           
