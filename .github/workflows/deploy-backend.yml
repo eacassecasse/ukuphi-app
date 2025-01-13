@@ -90,7 +90,11 @@ jobs:
       - name: Build Application
         run: |
           cd backend
-          npm run build
+          npm run build || {
+            echo "Build failed. Checking logs for details..."
+            cat npm-debug.log || echo "npm-debug.log not found."
+            exit 1
+          }
 
       - name: Deploy Application
         run: |
