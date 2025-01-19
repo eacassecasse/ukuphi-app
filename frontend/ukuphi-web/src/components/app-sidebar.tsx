@@ -1,0 +1,145 @@
+"use client"
+
+import * as React from "react"
+import {
+  BarChart2,
+  Calendar,
+  CalendarCheck,
+  GalleryVerticalEnd,
+  LifeBuoy,
+  Settings,
+  House,
+  LogOut,
+  Ticket,
+  Users
+} from "lucide-react"
+
+import { NavMain } from "@/components/nav-main"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+} from "@/components/ui/sidebar"
+import { Button } from "./ui/button"
+import { Card, CardHeader, CardDescription, CardContent } from "./ui/card"
+import { NavSecondary } from "./nav-secondary"
+import { Separator } from "./ui/separator"
+
+// This is sample data.
+const data = {
+  user: {
+    name: "shadcn",
+    email: "m@example.com",
+    avatar: "/avatars/shadcn.jpg",
+  },
+  navMain: [
+    {
+      title: "Dashboard",
+      url: "#",
+      icon: House,
+      isActive: true,
+    },
+    {
+      title: "Bookings",
+      url: "#",
+      icon: Ticket,
+    },
+    {
+      title: "Schedule",
+      url: "#",
+      icon: Calendar,
+    },
+    {
+      title: "Event Management",
+      url: "#",
+      icon: CalendarCheck,
+    },
+    {
+      title: "Customer Management",
+      url: "#",
+      icon: Users,
+    },
+    {
+      title: "Reports",
+      url: "#",
+      icon: BarChart2,
+    },
+  ],
+  navSecondary: [
+    {
+      title: "Settings",
+      url: "#",
+      icon: Settings,
+    },
+    {
+      title: "Help & Support",
+      url: "#",
+      icon: LifeBuoy,
+    },
+  ],
+}
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  return (
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <a href="#">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  <GalleryVerticalEnd className="size-4" />
+                </div>
+                <div className="flex flex-col gap-0.5 leading-none">
+                  <span className="font-semibold">Ukuphi</span>
+                </div>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        <NavMain items={data.navMain} />
+        <div className="px-4">
+          <Separator />
+        </div>
+        <NavSecondary items={data.navSecondary} />
+      </SidebarContent>
+      <SidebarFooter>
+        <div className="p-1">
+          <Card className="shadow-none">
+            <form>
+              <CardHeader className="text-center p-4 pb-0">
+                <CardDescription>
+                  Host events with ease and connect with your audience!
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-2.5 p-4">
+                <Button
+                  className="w-full bg-sidebar-foreground text-sidebar-primary-foreground shadow-none"
+                  size="sm"
+                >
+                  Create an Event
+                </Button>
+              </CardContent>
+            </form>
+          </Card>
+        </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="sm">
+              <LogOut />
+              <span>Log Out</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
+  )
+}

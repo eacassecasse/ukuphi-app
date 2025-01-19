@@ -1,9 +1,7 @@
-import Image from "next/image";
-import Event, { EventProps } from "@/components/event";
-import Filter from "@/components/filter";
-import { Button } from "@/components/ui/button";
+import Dashboard from "@/components/dashboard";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
-const events: EventProps[] = [
+const events = [
   {
     title: "2025 Maputo Jazz Festival ‘25 Cultural Beats Maputo",
     description: "Experience a night filled with soulful rhythms and African pride.",
@@ -127,30 +125,13 @@ const event_categories = {
 
 export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+    <div className="flex flex-col items-center justify-items-center min-h-screen border border-red-500 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <div className="flex flex-col gap-8">
-          <div className="flex flex-row justify-between items-center px-2">
-            <h2 className="text-4xl font-bold">Upcoming Events</h2>
-            <div className="flex flex-row gap-2 justify-between items-center">
-              <Filter filter={weekdays}/>
-              <Filter filter={event_types}/>
-              <Filter filter={event_categories}/>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-8 mt-8">
-            {
-              events.map((event, index) => (
-                <Event key={index} event={event} />
-              ))
-            }
-          </div>
-          <div className="flex justify-center items-center mt-4">
-            <Button className="px-12 py-4 font-bold text-violet-500 border-violet-500 mt-4 rounded-2xl" variant="outline">Load More</Button>
-          </div>
-        </div>
+        <SidebarProvider>
+          <Dashboard />
+        </SidebarProvider>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
+      {/* <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
         <a
           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
           href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
@@ -196,7 +177,7 @@ export default function Home() {
           />
           Go to nextjs.org →
         </a>
-      </footer>
+      </footer> */}
     </div>
   );
 }
