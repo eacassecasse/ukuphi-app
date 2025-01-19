@@ -24,6 +24,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { Button } from "./ui/button"
 import { Card, CardHeader, CardDescription, CardContent } from "./ui/card"
@@ -85,6 +86,7 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { state } = useSidebar()
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -111,7 +113,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} />
       </SidebarContent>
       <SidebarFooter>
-        <div className="p-1">
+        <div className={`p-1 transition-all duration-300 ease-in-out ${state === "expanded" ? "flex opacity-100 max-h-[1000px]" : "hidden opacity-0 max-h-0"}`}>
           <Card className="shadow-none">
             <form>
               <CardHeader className="text-center p-4 pb-0">
@@ -130,14 +132,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </form>
           </Card>
         </div>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="sm">
-              <LogOut />
-              <span>Log Out</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
