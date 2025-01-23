@@ -6,12 +6,16 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Modal } from "./modal"
+import OnComingFeature from "./onComingFeature"
 
 const bookings = [
     {
         attendee_name: "Edmilson de Azevedo Cassecasse",
         eventTitle: "Dance Night Extravaganza",
         paymentStatus: "Paid",
+        unitPrice: "$25",
+        packs: 10,
         totalAmount: "$250.00",
         paymentMethod: "Credit Card",
     },
@@ -19,6 +23,8 @@ const bookings = [
         attendee_name: "INV002",
         eventTitle: "Dance Night Extravaganza",
         paymentStatus: "Pending",
+        unitPrice: "$15",
+        packs: 10,
         totalAmount: "$150.00",
         paymentMethod: "PayPal",
     },
@@ -26,6 +32,8 @@ const bookings = [
         attendee_name: "INV003",
         eventTitle: "Country Fiesta",
         paymentStatus: "Unpaid",
+        unitPrice: "$35",
+        packs: 10,
         totalAmount: "$350.00",
         paymentMethod: "Bank Transfer",
     },
@@ -33,6 +41,8 @@ const bookings = [
         attendee_name: "INV004",
         eventTitle: "Epic Music Festival",
         paymentStatus: "Paid",
+        unitPrice: "$45",
+        packs: 10,
         totalAmount: "$450.00",
         paymentMethod: "Credit Card",
     },
@@ -40,6 +50,8 @@ const bookings = [
         attendee_name: "INV005",
         eventTitle: "Summer Beats",
         paymentStatus: "Paid",
+        unitPrice: "$55",
+        packs: 10,
         totalAmount: "$550.00",
         paymentMethod: "PayPal",
     },
@@ -47,6 +59,8 @@ const bookings = [
         attendee_name: "INV006",
         eventTitle: "Rock Fest",
         paymentStatus: "Pending",
+        unitPrice: "$20",
+        packs: 10,
         totalAmount: "$200.00",
         paymentMethod: "Bank Transfer",
     },
@@ -54,6 +68,8 @@ const bookings = [
         attendee_name: "INV007",
         eventTitle: "Country Fiesta",
         paymentStatus: "Unpaid",
+        unitPrice: "$30",
+        packs: 10,
         totalAmount: "$300.00",
         paymentMethod: "Credit Card",
     },
@@ -70,7 +86,14 @@ export default function Bookings() {
                             <h2 className="text-xl font-semibold">All Bookings List</h2>
                         </div>
                         <div className="flex flex-row gap-2">
-                            <Button className="px-6 rounded-3xl">Add New <Plus /></Button>
+                            <Modal>
+                                <Modal.Button>
+                                    <Button className="px-6 rounded-3xl">Add New <Plus /></Button>
+                                </Modal.Button>
+                                <Modal.Content className="max-w-md p-12">
+                                    <OnComingFeature />
+                                </Modal.Content>
+                            </Modal>
                             <Select>
                                 <SelectTrigger className="flex-1 gap-1 px-6 rounded-3xl">
                                     <Calendar />
@@ -94,7 +117,9 @@ export default function Bookings() {
                                     <TableHead className="w-3/6">Attendee</TableHead>
                                     <TableHead className="w-2/6">Event</TableHead>
                                     <TableHead className="w-2/6">Status</TableHead>
+                                    <TableHead className="w-2/6">Packs</TableHead>
                                     <TableHead className="w-3/6">Method</TableHead>
+                                    <TableHead className="w-2/6">Unit Price</TableHead>
                                     <TableHead className="text-right">Amount</TableHead>
                                     <TableHead className="w-1/6"></TableHead>
                                 </TableRow>
@@ -109,7 +134,9 @@ export default function Bookings() {
                                                 {booking.paymentStatus}
                                             </div>
                                         </TableCell>
+                                        <TableCell>{booking.packs}</TableCell>
                                         <TableCell>{booking.paymentMethod}</TableCell>
+                                        <TableCell>{booking.unitPrice}</TableCell>
                                         <TableCell className="text-right">{booking.totalAmount}</TableCell>
                                         <TableCell className="flex flex-row">
                                             <Button variant="link">

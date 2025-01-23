@@ -1,8 +1,11 @@
+'use client'
+
 import { Plus, Calendar, Table, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TableHeader, TableRow, TableHead, TableBody, TableCell, TableFooter } from "@/components/ui/table";
+import { useModal } from "@/context/FileContext";
 
 interface BookingProp {
     attendee_name: string;
@@ -12,6 +15,21 @@ interface BookingProp {
     paymentMethod: string;
 }
 export default function Bookings({ bookings }: { bookings: BookingProp[] }) {
+    const { showModal } = useModal();
+
+    const handleAddBooking = () => {
+        showModal({
+            title: "Add a new booking",
+            body: (
+                <form>
+                    <input type="text" placeholder="Customer Name" />
+                    <input type="email" placeholder="Customer Email" />
+                    <button type="submit">Submit</button>
+                </form>
+            )
+        });
+    }
+
     return (
         <div className="bg-white h-72 max-h-screen col-span-3 flex flex-col rounded-xl border">
             <div className="flex flex-row justify-between items-center p-6">
@@ -19,7 +37,7 @@ export default function Bookings({ bookings }: { bookings: BookingProp[] }) {
                     <h2 className="text-xl font-semibold">All Bookings List</h2>
                 </div>
                 <div className="flex flex-row gap-2">
-                    <Button className="px-6 rounded-3xl">Add New <Plus /></Button>
+                    <Button className="px-6 rounded-3xl" onClick={handleAddBooking}>Add New <Plus /></Button>
                     <Select>
                         <SelectTrigger className="flex-1 gap-1 px-6 rounded-3xl">
                             <Calendar />

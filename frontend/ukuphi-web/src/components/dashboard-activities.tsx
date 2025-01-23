@@ -3,7 +3,8 @@ import { Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { act } from "react";
+import { Modal } from "@/components/modal";
+import { RegisterForm } from "@/components/register-form";
 
 
 interface ActivityProps {
@@ -40,7 +41,14 @@ export default function Activity({ activities }: { activities: ActivityProps[] }
                     <p className="text-xs">{toUSDate(today)}</p>
                 </div>
                 <div className="flex flex-row gap-2">
-                    <Button className="px-4 rounded-3xl">Add New <Plus /></Button>
+                    <Modal>
+                        <Modal.Button>
+                            <Button className="px-6 rounded-3xl">Add New <Plus /></Button>
+                        </Modal.Button>
+                        <Modal.Content className="flex justify-center items-center p-12">
+                            <RegisterForm className="flex-1" />
+                        </Modal.Content>
+                    </Modal>
                 </div>
             </div>
             <div className="grid grid-cols-7 justify-center items-center gap-2 px-4 py-2">

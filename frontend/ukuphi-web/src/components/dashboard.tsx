@@ -9,17 +9,19 @@ import {
     CardFooter,
     CardHeader,
 } from "@/components/ui/card"
-import {
-    SidebarInset,
-} from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import Header from "./dashboard-header"
-import EventList from "./dashboard-events"
-import Activity from "./dashboard-activities"
-import { Banner } from "./dashboard-carousel"
+import EventList from "@/components/dashboard-events"
+import Activity from "@/components/dashboard-activities"
+import { Banner } from "@/components/dashboard-carousel"
+import { Modal } from "@/components/modal"
+import { useState } from "react"
+import { LoginForm } from "@/components/login-form"
+import { EventForm } from "./event-form"
+import { RegisterForm } from "./register-form"
+import OnComingFeature from "./onComingFeature"
 
 
 const stats = [
@@ -204,7 +206,7 @@ const notifications = [
 
 
 export default function Dashboard() {
-
+    const [open, setOpen] = useState(false)
     return (
         <div className="grid auto-rows-min gap-4 px-4 md:grid-cols-3">
             <div className="md:col-span-2 grid sm:grid-cols-3 gap-4">
@@ -251,7 +253,14 @@ export default function Dashboard() {
                             <h2 className="text-xl font-semibold">All Bookings List</h2>
                         </div>
                         <div className="flex flex-row gap-2">
-                            <Button className="px-6 rounded-3xl">Add New <Plus /></Button>
+                            <Modal open={open} onOpenChange={setOpen}>
+                                <Modal.Button>
+                                    <Button className="px-6 rounded-3xl">Add New <Plus /></Button>
+                                </Modal.Button>
+                                <Modal.Content className="max-w-md p-12">
+                                    <OnComingFeature />
+                                </Modal.Content>
+                            </Modal>
                             <Select>
                                 <SelectTrigger className="flex-1 gap-1 px-6 rounded-3xl">
                                     <Calendar />

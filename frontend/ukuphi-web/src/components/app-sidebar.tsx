@@ -85,7 +85,7 @@ const data = {
   ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ activeMenu, setActiveMenu, ...props }: React.ComponentProps<typeof Sidebar>) {
   const { state } = useSidebar()
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -106,11 +106,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
         <div className="px-4">
           <Separator />
         </div>
-        <NavSecondary items={data.navSecondary} />
+        <NavSecondary items={data.navSecondary} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
       </SidebarContent>
       <SidebarFooter>
         <div className={`p-1 transition-all duration-300 ease-in-out ${state === "expanded" ? "flex opacity-100 max-h-[1000px]" : "hidden opacity-0 max-h-0"}`}>

@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Map } from '@/components/map'
+import { MapComponent } from '@/components/map'
 import { useState } from "react";
 
 interface EventProps {
@@ -113,7 +113,7 @@ export default function EventList({ events, className, ...props }: { events: Eve
                                     </div>
                                 </div>
                                 <div className="flex-1">
-                                    <Map location={selectedEvent.location} />
+                                    <MapComponent location={selectedEvent.location} />
                                 </div>
                             </>
                         ) : (
