@@ -9,6 +9,14 @@ enum Role {
   ADMIN
 }
 
+enum Rank {
+  NEWBIE
+  BRONZE
+  SILVER
+  GOLD
+  PRO
+}
+
 enum Payment_Method {
   DEBIT_CARD
   CREDIT_CARD
@@ -48,10 +56,12 @@ model User {
   password      String
   role          Role           @default(ATTENDEE)
   verified      Boolean?       @default(false)
+  rank          Rank           @default(NEWBIE)
   events        Event[]
   posts         Post[]
   notifications Notification[]
   comments      Comment[]
+  bookings      Payment[]      @relation("Booker")
   payments      Payment[]
 
   @@map("users")
@@ -69,8 +79,32 @@ model Event {
   organizer    User            @relation(fields: [organizerId], references: [id])
   tickets      Ticket[]
   comments     Event_Comment[]
+  persons      EventPerson[]
 
   @@map("events")
+}
+
+model Person {
+  id        String        @id @default(uuid())
+  name      String
+  role      String
+  bio       String?
+  image_url String?
+  events    EventPerson[]
+
+  @@map("persons")
+}
+
+model EventPerson {
+  id       String @id @default(uuid())
+  eventId  String @map("event_id")
+  personId String @map("person_id")
+
+  event  Event  @relation(fields: [eventId], references: [id])
+  person Person @relation(fields: [personId], references: [id])
+
+  @@unique([eventId, personId])
+  @@map("event_persons")
 }
 
 model Ticket {
@@ -87,15 +121,20 @@ model Ticket {
 
 model Payment {
   id         String         @id @default(uuid())
-  userId     String         @map("user_id")
+  userId     String?        @map("user_id")
   ticketId   String         @map("ticket_id")
+  bookedById String?        @map("booked_by_id")
   amount     Float
   method     Payment_Method
   status     Payment_Status
   qr_code    String
   created_at DateTime       @default(now())
+  guestName  String?        @map("guest_name")
+  guestEmail String?        @map("guest_email")
+  guestPhone String?        @map("guest_phone")
   ticket     Ticket         @relation(fields: [ticketId], references: [id])
-  user       User           @relation(fields: [userId], references: [id])
+  user       User?          @relation(fields: [userId], references: [id])
+  bookedBy   User?          @relation("Booker", fields: [bookedById], references: [id])
 
   @@unique([userId, ticketId])
   @@map("payments")

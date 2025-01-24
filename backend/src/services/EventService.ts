@@ -22,10 +22,17 @@ export class EventService {
       where: {
         organizerId: organizer.id,
       },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        date: true,
+        image_url: true,
+      },
     });
 
     if (events.length === 0) {
-      throw new NotFoundError("No events found for the organizer");
+      throw new NotFoundError("No events scheduled yet");
     }
 
     return events;
@@ -152,11 +159,11 @@ export class EventService {
                 title: true,
                 description: true,
                 location: true,
-                date: true
-              }
-            }
-          }
-        }
+                date: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -176,15 +183,16 @@ export class EventService {
             content: true,
             commentedAt: true,
           },
-        },event: {
+        },
+        event: {
           select: {
             id: true,
             title: true,
             description: true,
             location: true,
-            date: true
-          }
-        }
+            date: true,
+          },
+        },
       },
     });
 

@@ -1,5 +1,4 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { EventService } from "../services/EventService";
 import { validateWithZod } from "../utils/validation.zod";
 import {
   CreateTicketInput,
@@ -209,13 +208,17 @@ export class TicketController {
   static async purchaseHandler(
     request: FastifyRequest<{
       Params: { id: string };
-      Body: CreatePaymentInput;
+      Body: CreatePaymentInput & {
+        booked_by?: string;
+        guestInfo?: { name: string; email: string; phone?: string };
+      };
     }>,
     reply: FastifyReply
   ) {
     const body = validateWithZod(paymentSchema.paymentCore)(request.body);
 
     const { id } = request.params;
+    const { booked_by, guestInfo, ...paymentData } = body;
 
     if (!id) {
       return reply.status(400).send({
@@ -223,20 +226,50 @@ export class TicketController {
       });
     }
 
-    const payment = await TicketService.purchase(request.user.id, {
-      ticket_id: id,
-      ...body,
-    });
+    try {
+      const userId = booked_by || request.user.id;
 
-    await validateWithZod(paymentSchema.createPaymentResponseSchema)(payment);
+      const payment = await TicketService.purchase(
+        userId,
+        {
+          ticket_id: id,
+          ...paymentData,
+        },
+        request.user.id,
+        guestInfo
+      );
 
-    await NotificationService.create(request.user.id, {
-      message: `Ticket ${id} was successfully purchased.`,
-      type: "INFO",
-      status: "UNREAD",
-    });
+      await validateWithZod(paymentSchema.createPaymentResponseSchema)(payment);
 
-    return reply.status(201).send(payment);
+      const notificationPromises = [
+        await NotificationService.create(request.user.id, {
+          message: `Ticket ${id} was successfully purchased.`,
+          type: "INFO",
+          status: "UNREAD",
+        }),
+      ];
+
+      if (booked_by && booked_by !== request.user.id) {
+        notificationPromises.push(
+          await NotificationService.create(request.user.id, {
+            message: `You successfully booked a ticket ${id} for user ${{
+              userId,
+            }}`,
+            type: "INFO",
+            status: "UNREAD",
+          })
+        );
+      }
+
+      await Promise.all(notificationPromises);
+
+      return reply.status(201).send(payment);
+    } catch (error: any) {
+      return reply.status(500).send({
+        message: "An error occurred while processing the payment",
+        error: error.message,
+      });
+    }
   }
 
   static async viewPaymentHandler(

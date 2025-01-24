@@ -75,6 +75,36 @@ export class EventController {
     return reply.status(200).send(events);
   }
 
+  static async listScheduledHandler(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    await redis.connect();
+
+    const cacheKey = "scheduled-cached";
+    const cached = await redis.get(cacheKey);
+
+    if (cached) {
+      return reply.status(200).send(JSON.parse(cached));
+    }
+
+    if (request.user.role !== "ORGANIZER") {
+      return reply.status(403).send({
+        message: "Not authorized",
+      });
+    }
+
+    const scheduled = await EventService.findEventsByOrganizer(request.user.id);
+
+    if (!scheduled || scheduled.length === 0) {
+      return reply.status(200).send([]);
+    }
+
+    await redis.set(cacheKey, JSON.stringify(scheduled), 3600);
+
+    return reply.status(200).send(scheduled);
+  }
+
   static async getHandler(
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply

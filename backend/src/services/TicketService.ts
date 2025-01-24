@@ -3,7 +3,7 @@ import { CreatePaymentInput } from "../inputs/payment.schema";
 import { CreateTicketInput, UpdateTicketInput } from "../inputs/ticket.schema";
 import { db } from "../lib/prisma";
 import { EventService } from "./EventService";
-import { NotFoundError } from "../models/errors";
+import { ForbiddenError, NotFoundError } from "../models/errors";
 
 export class TicketService {
   static async find(eventId: string) {
@@ -161,106 +161,70 @@ export class TicketService {
     });
   }
 
-  static async purchase(userId: string, input: CreatePaymentInput) {
+  static async purchase(
+    userId: string | null,
+    input: CreatePaymentInput,
+    bookedBy: string | null,
+    guestInfo?: { name: string; email: string; phone?: string }
+  ) {
     const { ticket_id, ...rest } = input;
 
     const ticket = await db.ticket.findUnique({
-      where: {
-        id: ticket_id,
-      },
+      where: { id: ticket_id },
     });
 
     if (!ticket) {
       throw new NotFoundError("Ticket not found.");
     }
 
-    const existingPayment = await db.payment.findUnique({
-      where: {
-        userId_ticketId: {
-          userId,
-          ticketId: ticket.id
-        }
-      },
-    });
-
-    let payment = null;
-
-    if (existingPayment) {
-      payment = await db.payment.update({
-        where: {
-          id: existingPayment.id,
-        },
-        data: {
-          amount: existingPayment.amount + input.amount,
-        },
-
-        select: {
-          id: true,
-          amount: true,
-          method: true,
-          qr_code: true,
-          status: true,
-          created_at: true,
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          ticket: {
-            select: {
-              id: true,
-              price: true,
-              existingQuantity: true,
-              type: true,
-            },
-          },
-        },
+    if (bookedBy && userId && bookedBy !== userId) {
+      // Validate the role of the person booking on behalf of another user
+      const organizerOrAdmin = await db.user.findUnique({
+        where: { id: bookedBy },
+        select: { role: true },
       });
-    } else {
-      const qrCode = await QRCode.toDataURL(
-        `user-${userId}:payment:${ticket.id}:${input.method}-${input.amount}`
-      );
 
-      payment = await db.payment.create({
-        data: {
-          userId,
-          ticketId: ticket.id,
-          status: "CONFIRMED",
-          qr_code: qrCode,
-          ...rest,
-        },
-        select: {
-          id: true,
-          amount: true,
-          method: true,
-          qr_code: true,
-          status: true,
-          created_at: true,
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          ticket: {
-            select: {
-              id: true,
-              price: true,
-              existingQuantity: true,
-              type: true,
-            },
-          },
-        },
-      });
+      if (
+        !organizerOrAdmin ||
+        !["ADMIN", "ORGANIZER"].includes(organizerOrAdmin.role)
+      ) {
+        throw new ForbiddenError(
+          "Only organizers or admins can book for others."
+        );
+      }
     }
 
+    // Handle guest-specific logic
+    let paymentData: any = {
+      ticketId: ticket.id,
+      amount: input.amount,
+      method: input.method,
+      status: "CONFIRMED",
+      qr_code: await QRCode.toDataURL(
+        `${userId || guestInfo?.email}:payment:${ticket.id}:${input.method}-${
+          input.amount
+        }`
+      ),
+      bookedById: bookedBy,
+    };
+
+    if (userId) {
+      paymentData.userId = userId;
+    } else if (guestInfo) {
+      paymentData.guestName = guestInfo.name;
+      paymentData.guestEmail = guestInfo.email;
+      paymentData.guestPhone = guestInfo.phone || null;
+    } else {
+      throw new Error("Guest info is required for a guest booking.");
+    }
+
+    const payment = await db.payment.create({
+      data: paymentData,
+    });
+
+    // Reduce the ticket quantity
     await db.ticket.update({
-      where: {
-        id: ticket.id,
-      },
+      where: { id: ticket.id },
       data: {
         existingQuantity: ticket.existingQuantity - input.amount,
       },
@@ -274,8 +238,8 @@ export class TicketService {
       where: {
         userId_ticketId: {
           userId,
-          ticketId
-        }
+          ticketId,
+        },
       },
       include: {
         ticket: true,
@@ -287,5 +251,32 @@ export class TicketService {
     }
 
     return payment;
+  }
+
+  // BOOKINGS
+  static async listBookings(id: string) {
+    const bookings = await db.payment.findMany({
+      where: {
+        ticket: {
+          event: {
+            organizerId: id,
+          },
+        },
+      },
+      include: {
+        ticket: {
+          include: {
+            event: true,
+          },
+        },
+        user: true,
+      },
+    });
+
+    if (bookings.length === 0) {
+      throw new NotFoundError("Could not find any bookings");
+    }
+
+    return bookings;
   }
 }
