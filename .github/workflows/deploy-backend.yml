@@ -156,6 +156,7 @@ jobs:
               npm cache clean --force
               npm install --omit=dev --loglevel=error
             }
+            npm install typescript --save-dev
 
             # Managing process with pm2
             PROCESS_NAME="ukuphi-backend-${{ matrix.environment }}"
