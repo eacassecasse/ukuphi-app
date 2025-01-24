@@ -45,7 +45,6 @@ fastify.register(rateLimit, {
 
 //Routes
 fastify.get("/hello", async (req, res) => {
-  console.log(process.env);
   return { message: "Hello world!" };
 });
 
@@ -54,7 +53,7 @@ fastify.register(routes, { prefix: "/api/v1" });
 async function bootstrap() {
   try {
     await fastify.listen({
-      port: parseInt(process.env.PORT || '5000'),
+      port: parseInt(process.env.PORT || "5000"),
       host: "0.0.0.0",
     });
 
