@@ -4,6 +4,8 @@ import { eventRoutes } from "./event";
 import { ticketRoutes } from "./ticket";
 import { notificationRoutes } from "./notification";
 import { postRoutes } from "./post";
+import { bookingRoutes } from "./bookings";
+import { scheduleRoutes } from "./schedules";
 
 export async function routes(
   fastify: FastifyInstance,
@@ -14,4 +16,6 @@ export async function routes(
   fastify.register(ticketRoutes, { prefix: "/tickets" });
   fastify.register(postRoutes, { prefix: "/posts" });
   fastify.register(notificationRoutes, { prefix: "/notifications" });
+  fastify.register(bookingRoutes, { prefix: "/bookings" });
+  fastify.register(scheduleRoutes, { prefix: "/schedules" });
 }
