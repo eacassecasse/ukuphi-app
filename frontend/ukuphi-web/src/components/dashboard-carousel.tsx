@@ -11,6 +11,15 @@ import {
 } from "@/components/ui/carousel"
 import { useState } from "react";
 import { Button } from "./ui/button";
+import { CldImage } from 'next-cloudinary';
+
+const images = [
+    'cld-sample',
+    'cld-sample-2',
+    'cld-sample-3',
+    'cld-sample-4',
+    'cld-sample-5',
+]
 
 export function Banner() {
     const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
@@ -42,12 +51,12 @@ export function Banner() {
         <div className="relative w-full max-w-sm mx-auto">
             <Carousel setApi={setCarouselApi} opts={{ loop: true }} className="w-full max-w-sm h-full z-10">
                 <CarouselContent>
-                    {Array.from({ length: 5 }).map((_, index) => (
+                    {images.map((image, index) => (
                         <CarouselItem key={index}>
                             <div>
                                 <Card className="h-full border-0 shadow-sm">
-                                    <CardContent className="flex aspect-video items-center justify-center">
-                                        <span className="text-4xl font-semibold">{index + 1}</span>
+                                    <CardContent className="flex aspect-video items-center justify-center p-0">
+                                        <CldImage alt={image} src={image} height={500} width={500} className="object-cover w-full h-full rounded-xl" />
                                     </CardContent>
                                 </Card>
                             </div>
@@ -58,8 +67,8 @@ export function Banner() {
 
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center space-x-1 z-20">
                 {
-                    Array.from({ length: totalItems }).map((_, index) => (
-                        <Button variant="outline" key={index} onClick={() => scrollToIndex(index)} className={`w-3 h-3 rounded-full p-0 min-w-0 ${ currentIndex === index ? "bg-erie-black": "bg-gray-300"}`}/>
+                    images.map((_, index) => (
+                        <Button variant="outline" key={index} onClick={() => scrollToIndex(index)} className={`w-3 h-3 rounded-full p-0 min-w-0 ${currentIndex === index ? "bg-erie-black" : "bg-gray-300"}`} />
                     ))
                 }
             </div>

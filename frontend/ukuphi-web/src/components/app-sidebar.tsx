@@ -9,7 +9,6 @@ import {
   LifeBuoy,
   Settings,
   House,
-  LogOut,
   Ticket,
   Users
 } from "lucide-react"

@@ -1,6 +1,6 @@
 'use client'
 
-import { MoreHorizontal, Plus, Calendar, Edit, Trash2, } from "lucide-react"
+import { MoreHorizontal, Plus, Calendar, Edit, Trash2, Loader, } from "lucide-react"
 import Image from 'next/image'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
@@ -17,11 +17,10 @@ import EventList from "@/components/dashboard-events"
 import Activity from "@/components/dashboard-activities"
 import { Banner } from "@/components/dashboard-carousel"
 import { Modal } from "@/components/modal"
-import { useState } from "react"
-import { LoginForm } from "@/components/login-form"
-import { EventForm } from "./event-form"
-import { RegisterForm } from "./register-form"
+import { useEffect, useState } from "react"
 import OnComingFeature from "./onComingFeature"
+import useApi from "@/hooks/use-api"
+import { NotificationProps } from "./dashboard-header"
 
 
 const stats = [
@@ -54,159 +53,93 @@ const stats = [
     }
 ]
 
-const events = [
-    {
-        title: "Dance Night Extravaganza",
-        location: "Los Angeles",
-        creation_date: "2025-01-01",
-        date: "2025-01-25",
-        tickets_sold: 372,
-        main_artist: {
-            name: "Adele",
-            image_url: "https://example.com/image1.jpg"
-        }
-    },
-    {
-        title: "Country Fiesta",
-        location: "Austin",
-        creation_date: "2025-01-05",
-        date: "2025-02-15",
-        tickets_sold: 519,
-        main_artist: {
-            name: "Beyoncé",
-            image_url: "https://example.com/image2.jpg"
-        }
-    },
-    {
-        title: "Epic Music Festival",
-        location: "New York",
-        creation_date: "2025-01-01",
-        date: "2025-02-20",
-        tickets_sold: 644,
-        main_artist: {
-            name: "Taylor Swift",
-            image_url: "https://example.com/image3.jpg"
-        }
-    },
-    {
-        title: "Summer Beats",
-        location: "Los Angeles",
-        creation_date: "2025-01-10",
-        date: "2025-01-30",
-        tickets_sold: 236,
-        main_artist: {
-            name: "Drake",
-            image_url: "https://example.com/image4.jpg"
-        }
-    },
-    {
-        title: "Rock Fest",
-        location: "San Francisco",
-        creation_date: "2025-01-15",
-        date: "2025-02-03",
-        tickets_sold: 162,
-        main_artist: {
-            name: "Imagine Dragons",
-            image_url: "https://example.com/image5.jpg"
-        }
+export interface EventProps {
+    id: string;
+    description: string;
+    title: string;
+    location: string;
+    creation_date: string;
+    date: string;
+    image_url: string;
+    tickets_sold: number;
+    main_artist?: {
+        name: string;
+        image_url: string;
     }
-]
+}
 
-const bookings = [
-    {
-        attendee_name: "INV001",
-        eventTitle: "Dance Night Extravaganza",
-        paymentStatus: "Paid",
-        totalAmount: "$250.00",
-        paymentMethod: "Credit Card",
+export interface BookingProps {
+    id: string,
+    userId: string,
+    ticketId: string,
+    bookedById?: string,
+    amount: number,
+    method: string,
+    status: string,
+    qr_code: string,
+    created_at: string,
+    guestName?: string,
+    guestEmail?: string,
+    guestPhone?: string,
+    ticket: {
+        id: string,
+        eventId: string,
+        type: string,
+        price: number,
+        existingQuantity: number,
+        event: {
+            id: string,
+            organizerId: string,
+            title: string,
+            description: string,
+            location: string,
+            image_url: string,
+            tickets_sold: number,
+            date: string
+        }
     },
-    {
-        attendee_name: "INV002",
-        eventTitle: "Dance Night Extravaganza",
-        paymentStatus: "Pending",
-        totalAmount: "$150.00",
-        paymentMethod: "PayPal",
-    },
-    {
-        attendee_name: "INV003",
-        eventTitle: "Country Fiesta",
-        paymentStatus: "Unpaid",
-        totalAmount: "$350.00",
-        paymentMethod: "Bank Transfer",
-    },
-    {
-        attendee_name: "INV004",
-        eventTitle: "Epic Music Festival",
-        paymentStatus: "Paid",
-        totalAmount: "$450.00",
-        paymentMethod: "Credit Card",
-    },
-    {
-        attendee_name: "INV005",
-        eventTitle: "Summer Beats",
-        paymentStatus: "Paid",
-        totalAmount: "$550.00",
-        paymentMethod: "PayPal",
-    },
-    {
-        attendee_name: "INV006",
-        eventTitle: "Rock Fest",
-        paymentStatus: "Pending",
-        totalAmount: "$200.00",
-        paymentMethod: "Bank Transfer",
-    },
-    {
-        attendee_name: "INV007",
-        eventTitle: "Country Fiesta",
-        paymentStatus: "Unpaid",
-        totalAmount: "$300.00",
-        paymentMethod: "Credit Card",
-    },
-]
-
-const notifications = [
-    {
-        type: "info",
-        content: "Your profile has been updated successfully.",
-        time: "09:15 AM",
-        status: "read"
-    },
-    {
-        type: "warning",
-        content: "Your subscription is about to expire in 3 days.",
-        time: "11:30 AM",
-        status: "read"
-    },
-    {
-        type: "error",
-        content: "Failed to upload the document. Please try again.",
-        time: "01:45 PM",
-        status: "unread"
-    },
-    {
-        type: "success",
-        content: "Payment of $50 has been processed successfully.",
-        time: "03:20 PM",
-        status: "read"
-    },
-    {
-        type: "info",
-        content: "A new event has been added to your calendar.",
-        time: "04:10 PM",
-        status: "unread"
-    },
-    {
-        type: "warning",
-        content: "Your account password was changed recently.",
-        time: "06:50 PM",
-        status: "unread"
-    },
-];
+    user: {
+        id: string,
+        name: string,
+        email: string,
+        phone: string,
+        password: string,
+        role: string,
+        verified: boolean,
+        rank: string
+    }
+}
 
 
 
 export default function Dashboard() {
     const [open, setOpen] = useState(false)
+    const [bookings, setBookings] = useState<BookingProps[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const { fetchWithAuth } = useApi();
+
+    const total = bookings?.reduce((acc, booking) => acc + booking.amount, 0);
+
+    useEffect(() => {
+        const loadBookings = async () => {
+            try {
+                const data = await fetchWithAuth("/bookings");
+                setLoading(false);
+                setBookings(data);
+            } catch (error: any) {
+                setLoading(false);
+                setError(error.message || "An error occurred while fetching bookings");
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadBookings();
+    }, [fetchWithAuth]);
+
+
     return (
         <div className="grid auto-rows-min gap-4 px-4 md:grid-cols-3">
             <div className="md:col-span-2 grid sm:grid-cols-3 gap-4">
@@ -246,7 +179,7 @@ export default function Dashboard() {
                         </Card>
                     ))
                 }
-                <EventList className="col-span-3 h-64 md:min-h-min" events={events} />
+                <EventList className="col-span-3 h-64 md:min-h-min" />
                 <div className="bg-white h-72 max-h-screen col-span-3 flex flex-col rounded-xl border">
                     <div className="flex flex-row justify-between items-center p-6">
                         <div>
@@ -290,17 +223,23 @@ export default function Dashboard() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
+                                {loading && <TableRow><TableCell className="flex flex-row justify-center items-center gap-1 w-full" colSpan={7}>Loading bookings... <Loader className="animate-spin" /></TableCell></TableRow>}
+                                {!loading && !error && bookings?.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={6}>No booking available.</TableCell>
+                                    </TableRow>
+                                )}
                                 {bookings.map((booking, index) => (
                                     <TableRow key={index}>
-                                        <TableCell className="font-medium">{booking.attendee_name}</TableCell>
-                                        <TableCell>{booking.eventTitle}</TableCell>
+                                        <TableCell className="font-medium">{booking.user.name}</TableCell>
+                                        <TableCell>{booking.ticket.event.title}</TableCell>
                                         <TableCell>
-                                            <div className={`flex justify-center items-center text-center font-semibold px-4 py-1 rounded-3xl ${booking.paymentStatus === 'Pending' ? "bg-gamboge/20 text-gamboge" : booking.paymentStatus === "Paid" ? "bg-pine-green/20 text-pine-green" : "bg-fire-engine-red/20 text-fire-engine-red"}`}>
-                                                {booking.paymentStatus}
+                                            <div className={`flex justify-center items-center text-center font-semibold px-4 py-1 rounded-3xl ${booking.status === 'PENDING' ? "bg-gamboge/20 text-gamboge" : booking.status === "CONFIRMED" ? "bg-pine-green/20 text-pine-green" : "bg-fire-engine-red/20 text-fire-engine-red"}`}>
+                                                {booking.status}
                                             </div>
                                         </TableCell>
-                                        <TableCell>{booking.paymentMethod}</TableCell>
-                                        <TableCell className="text-right">{booking.totalAmount}</TableCell>
+                                        <TableCell>{booking.method}</TableCell>
+                                        <TableCell className="text-right">$ {booking.amount}</TableCell>
                                         <TableCell className="flex flex-row">
                                             <Button variant="link">
                                                 <Edit className="text-erie-black" />
@@ -315,7 +254,7 @@ export default function Dashboard() {
                             <TableFooter>
                                 <TableRow>
                                     <TableCell colSpan={4}>Total</TableCell>
-                                    <TableCell className="text-right">$2,500.00</TableCell>
+                                    <TableCell className="text-right">${total}</TableCell>
                                 </TableRow>
                             </TableFooter>
                         </Table>
@@ -324,7 +263,7 @@ export default function Dashboard() {
             </div>
             <div className="flex flex-col gap-4">
                 <Banner />
-                <Activity activities={notifications} />
+                <Activity />
             </div>
         </div>
     )

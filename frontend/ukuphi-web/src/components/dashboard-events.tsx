@@ -6,19 +6,10 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { MapComponent } from '@/components/map'
-import { useState } from "react";
-
-interface EventProps {
-    title: string;
-    location: string;
-    creation_date: string;
-    date: string;
-    tickets_sold: number;
-    main_artist: {
-        name: string;
-        image_url: string;
-    }
-}
+import { useEffect, useState } from "react";
+import useApi from "@/hooks/use-api";
+import { EventProps } from "./dashboard";
+import { Loader } from "lucide-react";
 
 const formatDate = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short' };
@@ -27,13 +18,35 @@ const formatDate = (date: Date) => {
     return { day, month }
 }
 
-export default function EventList({ events, className, ...props }: { events: EventProps[]; className?: string }) {
+export default function EventList({ className, ...props }: { className?: string }) {
     const [selectedEvent, setSelectedEvent] = useState<EventProps>();
+    const [events, setEvents] = useState<EventProps[]>();
+    const { fetchWithAuth } = useApi();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const today = new Date();
 
     const handleSelectedEvent = (event: EventProps) => {
         setSelectedEvent(event);
     }
+
+    useEffect(() => {
+        const loadSchedules = async () => {
+            try {
+                const data = await fetchWithAuth("/schedules", { withCredentials: true });
+                setLoading(false);
+                setEvents(data);
+            } catch (error: any) {
+                setLoading(false);
+                setError(error.message || "An error occurred while fetching events.");
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadSchedules();
+    }, [fetchWithAuth]);
 
     return (
         <div className={`grid grid-cols-2 rounded-xl gap-4 p-6 bg-white ${className}`} {...props}>
@@ -58,8 +71,14 @@ export default function EventList({ events, className, ...props }: { events: Eve
                 </div>
                 <ScrollArea className="max-h-56 flex flex-col flex-1">
                     <div className="flex flex-col gap-2">
+                        {loading && <div><div className="flex flex-row justify-center items-center gap-1 w-full">Loading events... <Loader className="animate-spin" /></div></div>}
+                        {!loading && !error && events?.length === 0 && (
+                            <div className="flex flex-1 w-full">
+                                <div>No event scheduled.</div>
+                            </div>
+                        )}
                         {
-                            events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((event, index) => {
+                            events?.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((event, index) => {
                                 const creationDate = new Date(event.creation_date);
                                 const eventDate = new Date(event.date);
 

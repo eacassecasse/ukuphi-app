@@ -1,6 +1,6 @@
 'use client'
 
-import { Plus, Calendar, Edit, Trash2 } from "lucide-react"
+import { Plus, Calendar, Edit, Trash2, Loader } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -8,74 +8,36 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Modal } from "./modal"
 import OnComingFeature from "./onComingFeature"
+import { useEffect, useState } from "react"
+import useApi from "@/hooks/use-api"
+import { BookingProps } from "./dashboard"
 
-const bookings = [
-    {
-        attendee_name: "Edmilson de Azevedo Cassecasse",
-        eventTitle: "Dance Night Extravaganza",
-        paymentStatus: "Paid",
-        unitPrice: "$25",
-        packs: 10,
-        totalAmount: "$250.00",
-        paymentMethod: "Credit Card",
-    },
-    {
-        attendee_name: "INV002",
-        eventTitle: "Dance Night Extravaganza",
-        paymentStatus: "Pending",
-        unitPrice: "$15",
-        packs: 10,
-        totalAmount: "$150.00",
-        paymentMethod: "PayPal",
-    },
-    {
-        attendee_name: "INV003",
-        eventTitle: "Country Fiesta",
-        paymentStatus: "Unpaid",
-        unitPrice: "$35",
-        packs: 10,
-        totalAmount: "$350.00",
-        paymentMethod: "Bank Transfer",
-    },
-    {
-        attendee_name: "INV004",
-        eventTitle: "Epic Music Festival",
-        paymentStatus: "Paid",
-        unitPrice: "$45",
-        packs: 10,
-        totalAmount: "$450.00",
-        paymentMethod: "Credit Card",
-    },
-    {
-        attendee_name: "INV005",
-        eventTitle: "Summer Beats",
-        paymentStatus: "Paid",
-        unitPrice: "$55",
-        packs: 10,
-        totalAmount: "$550.00",
-        paymentMethod: "PayPal",
-    },
-    {
-        attendee_name: "INV006",
-        eventTitle: "Rock Fest",
-        paymentStatus: "Pending",
-        unitPrice: "$20",
-        packs: 10,
-        totalAmount: "$200.00",
-        paymentMethod: "Bank Transfer",
-    },
-    {
-        attendee_name: "INV007",
-        eventTitle: "Country Fiesta",
-        paymentStatus: "Unpaid",
-        unitPrice: "$30",
-        packs: 10,
-        totalAmount: "$300.00",
-        paymentMethod: "Credit Card",
-    },
-]
 
 export default function Bookings() {
+    const [bookings, setBookings] = useState<BookingProps[]>([]);
+    const { fetchWithAuth } = useApi();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const total = bookings?.reduce((acc, booking) => acc + booking.amount, 0);
+
+    useEffect(() => {
+        const loadBookings = async () => {
+            try {
+                const data = await fetchWithAuth("/bookings", { withCredentials: true });
+                setLoading(false);
+                setBookings(data);
+            } catch (error: Error | any) {
+                setLoading(false);
+                setError(error.message || "An error occured while fetching bookings.");
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadBookings();
+    }, [fetchWithAuth]);
 
     return (
         <div className="w-full px-4">
@@ -125,19 +87,25 @@ export default function Bookings() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {bookings.map((booking, index) => (
+                                {loading && <TableRow><TableCell className="flex flex-row justify-center items-center gap-1 w-full" colSpan={7}>Loading data... <Loader className="animate-spin" /></TableCell></TableRow>}
+                                {!loading && !error && bookings?.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={6}>No booking available.</TableCell>
+                                    </TableRow>
+                                )}
+                                {bookings?.map((booking, index) => (
                                     <TableRow key={index}>
-                                        <TableCell className="font-medium">{booking.attendee_name}</TableCell>
-                                        <TableCell>{booking.eventTitle}</TableCell>
+                                        <TableCell className="font-medium">{booking.user.name}</TableCell>
+                                        <TableCell>{booking.ticket.event.title}</TableCell>
                                         <TableCell>
-                                            <div className={`flex justify-center items-center text-center font-semibold px-4 py-1 rounded-3xl ${booking.paymentStatus === 'Pending' ? "bg-gamboge/20 text-gamboge" : booking.paymentStatus === "Paid" ? "bg-pine-green/20 text-pine-green" : "bg-fire-engine-red/20 text-fire-engine-red"}`}>
-                                                {booking.paymentStatus}
+                                            <div className={`flex justify-center items-center text-center font-semibold px-4 py-1 rounded-3xl ${booking.status === 'PENDING' ? "bg-gamboge/20 text-gamboge" : booking.status === "CONFIRMED" ? "bg-pine-green/20 text-pine-green" : "bg-fire-engine-red/20 text-fire-engine-red"}`}>
+                                                {booking.status}
                                             </div>
                                         </TableCell>
-                                        <TableCell>{booking.packs}</TableCell>
-                                        <TableCell>{booking.paymentMethod}</TableCell>
-                                        <TableCell>{booking.unitPrice}</TableCell>
-                                        <TableCell className="text-right">{booking.totalAmount}</TableCell>
+                                        <TableCell>{Math.floor(booking.amount / booking.ticket.price)}</TableCell>
+                                        <TableCell>{booking.method}</TableCell>
+                                        <TableCell>${booking.ticket.price}</TableCell>
+                                        <TableCell className="text-right">${booking.amount}</TableCell>
                                         <TableCell className="flex flex-row">
                                             <Button variant="link">
                                                 <Edit className="text-erie-black" />
@@ -151,8 +119,8 @@ export default function Bookings() {
                             </TableBody>
                             <TableFooter>
                                 <TableRow>
-                                    <TableCell colSpan={4}>Total</TableCell>
-                                    <TableCell className="text-right">$2,500.00</TableCell>
+                                    <TableCell colSpan={6}>Total</TableCell>
+                                    <TableCell className="text-right">${total}</TableCell>
                                 </TableRow>
                             </TableFooter>
                         </Table>

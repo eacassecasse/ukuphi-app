@@ -1,54 +1,40 @@
 'use client'
 
+import React, { useEffect, useState } from "react";
 import { Search, Bell, BellDot } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import React from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import useApi from "@/hooks/use-api";
+import { useAuth } from "@/context/AuthContext";
 
-
-const notifications = [
-    {
-        type: "info",
-        content: "Your profile has been updated successfully.",
-        time: "09:15 AM",
-        status: "read"
-    },
-    {
-        type: "warning",
-        content: "Your subscription is about to expire in 3 days.",
-        time: "11:30 AM",
-        status: "read"
-    },
-    {
-        type: "error",
-        content: "Failed to upload the document. Please try again.",
-        time: "01:45 PM",
-        status: "unread"
-    },
-    {
-        type: "success",
-        content: "Payment of $50 has been processed successfully.",
-        time: "03:20 PM",
-        status: "read"
-    },
-    {
-        type: "info",
-        content: "A new event has been added to your calendar.",
-        time: "04:10 PM",
-        status: "unread"
-    },
-    {
-        type: "warning",
-        content: "Your account password was changed recently.",
-        time: "06:50 PM",
-        status: "unread"
-    },
-];
+export interface NotificationProps {
+    type: string;
+    message: string;
+    sentAt: string;
+    status: string;
+}
 
 export default function Header() {
+    const { fetchWithAuth } = useApi();
+    const { user, logout } = useAuth();
+    const [notifications, setNotifications] = useState<NotificationProps[]>([]);
+
+    useEffect(() => {
+        const loadNotifications = async () => {
+            try {
+                const data = await fetchWithAuth("/notifications", { withCredentials: true });
+                setNotifications(data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        loadNotifications();
+    }, [fetchWithAuth]);
+
     const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
         console.log(event.target.value);
     };
@@ -88,17 +74,17 @@ export default function Header() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56">
                                 {
-                                    notifications.filter((notification) => notification.status === "unread").length === 0 ? (
+                                    notifications.filter((notification) => notification.status === "UNREAD").length === 0 ? (
                                         <DropdownMenuItem className="border border-fuschia-600">
                                             No new Notifications.
                                         </DropdownMenuItem>
                                     ) : (
                                         notifications
-                                            .filter((notification) => notification.status === "unread")
+                                            .filter((notification) => notification.status === "UNREAD")
                                             .map((not, index) => (
                                                 <React.Fragment key={index}>
                                                     <DropdownMenuItem>
-                                                        {not.content}
+                                                        {not.message}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                 </React.Fragment>
@@ -113,11 +99,11 @@ export default function Header() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button className="flex flex-row justify-start items-center w-full p-0 rounded-3xl gap-1" variant="outline">
-                                    <div className="w-10 h-10 rounded-full border border-cyan-400 flex items-center justify-center overflow-hidden">
-                                        {/* Replace .c with user image or initials */}
-                                        <img src="/path-to-image.jpg" alt="User" className="w-full h-full object-cover" />
-                                    </div>
-                                    <p className="text-sm truncate max-w-[calc(100%-3rem)]">{/* Username goes here */}2015edmilsonb1327@gmail.com</p>
+                                    <Avatar>
+                                        <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                                        <AvatarFallback>{ }</AvatarFallback>
+                                    </Avatar>
+                                    <p className="text-sm truncate max-w-[calc(100%-3rem)]">{user?.name}</p>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56">
@@ -154,7 +140,7 @@ export default function Header() {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>Support</DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={logout}>
                                     Log out
                                     <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                                 </DropdownMenuItem>

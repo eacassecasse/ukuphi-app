@@ -1,17 +1,19 @@
 'use client'
 
-import { Plus, Calendar, Edit, Trash2, MoreHorizontal } from "lucide-react"
+import { Plus, Calendar, Edit, Trash2, MoreHorizontal, Loader } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Key, useState } from "react"
+import { Key, useEffect, useState } from "react"
 import { MapProvider } from "@/providers/map-provider"
 import { MapComponent } from '@/components/map'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { EventForm } from "@/components/event-form"
 import { Modal } from "@/components/modal"
+import useApi from "@/hooks/use-api"
+import { format, set } from "date-fns"
 
 interface EventProps {
     title: string;
@@ -56,12 +58,34 @@ const stats = [
 
 
 
-export default function EventList({ events }: { events: EventProps[] }) {
+export default function EventList() {
+    const { fetchWithAuth } = useApi();
     const [selectedEvent, setSelectedEvent] = useState<EventProps>();
+    const [events, setEvents] = useState<EventProps[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const handleSelectedEvent = (event: EventProps) => {
         setSelectedEvent(event);
     }
+
+    useEffect(() => {
+        const loadSchedules = async () => {
+            try {
+                const data = await fetchWithAuth("/schedules");
+                setLoading(false);
+                setEvents(data);
+            } catch (error: any) {
+                setLoading(false);
+                setError(error.message || "An error occurred while fetching events");
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadSchedules();
+    }, [fetchWithAuth]);
 
     const locations = events && events.map(event => event.location);
 
@@ -106,7 +130,7 @@ export default function EventList({ events }: { events: EventProps[] }) {
                                 <Modal.Button>
                                     <Button className="px-6 rounded-3xl">Add New <Plus /></Button>
                                 </Modal.Button>
-                                <Modal.Content className="justify-center items-center p-12">
+                                <Modal.Content className="max-w-3xl justify-center items-center p-12">
                                     <EventForm />
                                 </Modal.Content>
                             </Modal>
@@ -139,12 +163,18 @@ export default function EventList({ events }: { events: EventProps[] }) {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {events.map((event, index: Key | null | undefined) => (
+                                {loading && <TableRow><TableCell className="flex flex-row justify-center items-center gap-1 w-full" colSpan={7}>Loading data... <Loader className="animate-spin" /></TableCell></TableRow>}
+                                {!loading && !error && events?.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={6}>No event scheduled.</TableCell>
+                                    </TableRow>
+                                )}
+                                {events?.map((event, index: Key | null | undefined) => (
                                     <TableRow key={index} onClick={() => handleSelectedEvent(event)}>
                                         <TableCell className="font-medium px-6">{event.title}</TableCell>
                                         <TableCell>{event.description}</TableCell>
                                         <TableCell>{event.location}</TableCell>
-                                        <TableCell>{event.date}</TableCell>
+                                        <TableCell>{format(new Date(event.date), 'yyyy-MM-dd')}</TableCell>
                                         <TableCell>{event.tickets_sold}</TableCell>
                                         <TableCell className="flex flex-row px-6">
                                             <Button variant="link">
@@ -163,7 +193,7 @@ export default function EventList({ events }: { events: EventProps[] }) {
                 <MapProvider>
                     <div className="flex flex-col w-[22rem] max-w-[22rem] gap-4 bg-white rounded-xl p-4">
                         <div className="aspect-square flex justify-center items-center rounded-xl bg-muted/50">
-                            {selectedEvent ? (<MapComponent height="50vh" location={selectedEvent.location} />) : (<MapComponent height="50vh" location={locations} />)}
+                            {selectedEvent ? (<MapComponent height="50vh" location={selectedEvent.location} />) : (<MapComponent height="50vh" location={locations ?? []} />)}
                         </div>
                     </div>
                 </MapProvider>

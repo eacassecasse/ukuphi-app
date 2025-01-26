@@ -5,29 +5,32 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TableHeader, TableRow, TableHead, TableBody, TableCell, TableFooter } from "@/components/ui/table";
-import { useModal } from "@/context/FileContext";
+import { useEffect, useState } from "react";
+import useApi from "@/hooks/use-api";
+import { BookingProps } from "./dashboard";
 
-interface BookingProp {
-    attendee_name: string;
-    eventTitle: string;
-    paymentStatus: string;
-    totalAmount: string;
-    paymentMethod: string;
-}
-export default function Bookings({ bookings }: { bookings: BookingProp[] }) {
-    const { showModal } = useModal();
+export default function Bookings() {
+    const [bookings, setBookings] = useState<BookingProps[]>();
+    const { fetchWithAuth } = useApi();
+
+    const total = bookings?.reduce((acc, booking) => acc + booking.amount, 0);
+
+    useEffect(() => {
+        const loadBookings = async () => {
+            try {
+                const data = await fetchWithAuth("/bookings", { withCredentials: true });
+                console.log(data);
+                setBookings(data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        loadBookings();
+    }, [fetchWithAuth]);
 
     const handleAddBooking = () => {
-        showModal({
-            title: "Add a new booking",
-            body: (
-                <form>
-                    <input type="text" placeholder="Customer Name" />
-                    <input type="email" placeholder="Customer Email" />
-                    <button type="submit">Submit</button>
-                </form>
-            )
-        });
+        console.log("Add Booking");
     }
 
     return (
@@ -67,17 +70,17 @@ export default function Bookings({ bookings }: { bookings: BookingProp[] }) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {bookings.map((booking, index) => (
+                        {bookings?.map((booking, index) => (
                             <TableRow key={index}>
-                                <TableCell className="font-medium">{booking.attendee_name}</TableCell>
-                                <TableCell>{booking.eventTitle}</TableCell>
+                                <TableCell className="font-medium">{booking.user.name}</TableCell>
+                                <TableCell>{booking.ticket.event.title}</TableCell>
                                 <TableCell>
-                                    <div className={`flex justify-center items-center text-center font-semibold px-4 py-1 rounded-3xl ${booking.paymentStatus === 'Pending' ? "bg-gamboge/20 text-gamboge" : booking.paymentStatus === "Paid" ? "bg-pine-green/20 text-pine-green" : "bg-fire-engine-red/20 text-fire-engine-red"}`}>
-                                        {booking.paymentStatus}
+                                    <div className={`flex justify-center items-center text-center font-semibold px-4 py-1 rounded-3xl ${booking.status === 'PENDING' ? "bg-gamboge/20 text-gamboge" : booking.status === "CONFIRMED" ? "bg-pine-green/20 text-pine-green" : "bg-fire-engine-red/20 text-fire-engine-red"}`}>
+                                        {booking.status}
                                     </div>
                                 </TableCell>
-                                <TableCell>{booking.paymentMethod}</TableCell>
-                                <TableCell className="text-right">{booking.totalAmount}</TableCell>
+                                <TableCell>{booking.method}</TableCell>
+                                <TableCell className="text-right">{booking.amount}</TableCell>
                                 <TableCell className="flex flex-row">
                                     <Button variant="link">
                                         <Edit className="text-erie-black" />
@@ -92,7 +95,7 @@ export default function Bookings({ bookings }: { bookings: BookingProp[] }) {
                     <TableFooter>
                         <TableRow>
                             <TableCell colSpan={4}>Total</TableCell>
-                            <TableCell className="text-right">$2,500.00</TableCell>
+                            <TableCell className="text-right">MZN {total}</TableCell>
                         </TableRow>
                     </TableFooter>
                 </Table>

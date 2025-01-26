@@ -1,21 +1,37 @@
 'use client'
 
-import { Edit, Trash2, MoreHorizontal, TrendingDown, TrendingUp } from "lucide-react"
+import { Edit, Trash2, MoreHorizontal, TrendingDown, TrendingUp, Loader } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Key, useState } from "react"
+import { Key, useEffect, useState } from "react"
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
+import useApi from "@/hooks/use-api"
 
-interface UserProps {
+interface CustomerProps {
+    id: string;
     name: string;
     email: string;
-    phone: string;
-    bookings: string;
-    level: string;
+    phone?: string;
+    rank: string;
     image_url?: string;
+    payments: [
+        {
+            id: string;
+            amount: number;
+            bookedById?: string;
+            created_at: string;
+            guestEmail: string;
+            guestName: string;
+            guestPhone: string;
+            method: string;
+            qr_code: string;
+            status: string;
+            ticketId: string;
+        }
+    ]
 }
 
 const stats = [
@@ -47,12 +63,34 @@ const stats = [
 
 
 
-export default function CustomerList({ customers }: { customers: UserProps[] }) {
-    const [selectedCustomer, setSelectedCustomer] = useState<UserProps>();
+export default function CustomerList() {
+    const [selectedCustomer, setSelectedCustomer] = useState<CustomerProps>();
+    const [customers, setCustomers] = useState<CustomerProps[]>([]);
+    const { fetchWithAuth } = useApi();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const handleSelectedCustomer = (customer: UserProps) => {
+    const handleSelectedCustomer = (customer: CustomerProps) => {
         setSelectedCustomer(customer);
     }
+
+    useEffect(() => {
+        const loadCustomers = async () => {
+            try {
+                const data = await fetchWithAuth("/customers");
+                setLoading(false);
+                setCustomers(data);
+            } catch (error: any) {
+                setLoading(false);
+                setError(error.message || "An error occurred while fetching customers.");
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadCustomers();
+    }, [fetchWithAuth]);
 
 
 
@@ -119,31 +157,41 @@ export default function CustomerList({ customers }: { customers: UserProps[] }) 
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {customers.map((customer, index: Key | null | undefined) => (
-                                    <TableRow key={index} onClick={() => handleSelectedCustomer(customer)}>
-                                        <TableCell className="flex flex-row items-center space-x-2 font-medium px-6">
-                                        <div className="w-10 h-10 bg-muted/50 rounded-full"></div>
-                                        <div className="text-sm font-semibold">{customer.name}</div>
-                                        </TableCell>
-                                        <TableCell>{customer.email}</TableCell>
-                                        <TableCell>{customer.phone}</TableCell>
-                                        <TableCell>{customer.bookings}</TableCell>
-                                        <TableCell>{customer.level}</TableCell>
-                                        <TableCell className="flex flex-row px-6">
-                                            <Button variant="link">
-                                                <Edit className="text-erie-black" />
-                                            </Button>
-                                            <Button variant="link">
-                                                <Trash2 className="text-fire-engine-red" />
-                                            </Button>
-                                        </TableCell>
+                                {loading && <TableRow><TableCell className="flex flex-row justify-center items-center gap-1 w-full" colSpan={6}>Loading data... <Loader className="animate-spin" /></TableCell></TableRow>}
+                                {!loading && !error && customers?.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={6}>No customer available.</TableCell>
                                     </TableRow>
-                                ))}
+                                )}
+                                {customers?.map((customer, index: Key | null | undefined) => {
+                                    const bookings = customer.payments.length;
+
+                                    return (
+                                        <TableRow key={index} onClick={() => handleSelectedCustomer(customer)}>
+                                            <TableCell className="flex flex-row items-center space-x-2 font-medium px-6">
+                                                <div className="w-10 h-10 bg-muted/50 rounded-full"></div>
+                                                <div className="text-sm font-semibold">{customer.name}</div>
+                                            </TableCell>
+                                            <TableCell>{customer.email}</TableCell>
+                                            <TableCell>{customer.phone || "Not set"}</TableCell>
+                                            <TableCell>{bookings}</TableCell>
+                                            <TableCell>{customer.rank}</TableCell>
+                                            <TableCell className="flex flex-row px-6">
+                                                <Button variant="link">
+                                                    <Edit className="text-erie-black" />
+                                                </Button>
+                                                <Button variant="link">
+                                                    <Trash2 className="text-fire-engine-red" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })}
                             </TableBody>
                         </Table>
                     </ScrollArea>
                 </div>
-                <div className="flex flex-col max-w-[22rem] gap-4 bg-white rounded-xl p-4 border">
+                <div className="hidden flex flex-col max-w-[22rem] gap-4 bg-white rounded-xl p-4 border">
                     <div className="aspect-square flex justify-center items-center rounded-xl bg-muted/50">
 
                     </div>
