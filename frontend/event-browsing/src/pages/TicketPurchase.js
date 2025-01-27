@@ -1,8 +1,16 @@
+import { format } from 'date-fns';
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const TicketPurchase = () => {
-  const [ticketQuantity, setTicketQuantity] = useState(1);
+  const location = useLocation()
+  const [ticketQuantity, setTicketQuantity] = useState(0);
+
+  const queryParams = new URLSearchParams(location.search);
+
+  const eventTitle = queryParams.get('eventTitle');
+  const eventLocation = queryParams.get('eventLocation');
+  const eventDate = queryParams.get('eventDate');
 
   const handleQuantityChange = (e) => {
     setTicketQuantity(e.target.value);
@@ -17,10 +25,10 @@ const TicketPurchase = () => {
     <div className="min-h-screen bg-gray-100 flex justify-center items-center p-6">
       <div className="bg-white shadow-xl rounded-xl p-8 w-full max-w-3xl">
         <div className="border-b pb-6 mb-6">
-          <h1 className="text-3xl font-bold text-blue-600">Ukuphi Live Concert</h1>
-          <p className="text-gray-700 text-lg">Venue: Maputo Cultural Center</p>
-          <p className="text-gray-700 text-lg">Date: January 15, 2025</p>
-          <p className="text-gray-700 text-lg">Time: 7:00 PM</p>
+          <h1 className="text-3xl font-bold text-blue-600">{eventTitle}</h1>
+          <p className="text-gray-700 text-lg">Venue: {eventLocation}</p>
+          <p className="text-gray-700 text-lg">Date: {format(new Date(eventDate), 'MMMM dd, yyyy')}</p>
+          <p className="text-gray-700 text-lg">Time: {format(new Date(eventDate),  'HH:mm')}</p>
         </div>
 
         <div className="mb-6">

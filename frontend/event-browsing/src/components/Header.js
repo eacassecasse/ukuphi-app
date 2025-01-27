@@ -24,11 +24,6 @@ const Header = () => {
             </Link>
           </li>
           <li>
-            <Link to="/create-event" className="hover:text-orange-400">
-              Create Event
-            </Link>
-          </li>
-          <li>
             <Link to="/purchase-ticket" className="hover:text-orange-400">
               Purchase Ticket
             </Link>

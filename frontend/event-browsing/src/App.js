@@ -5,7 +5,6 @@ import Footer from "./components/Footer";
 import LandingPage from "./pages/LandingPage";
 import EventsList from "./pages/EventList";
 import EventDetail from "./pages/EventDetail";
-import CreateEvent from "./pages/CreateEvent";
 import AboutUs from "./pages/AboutUs";
 import Blog from "./pages/Blog";
 import Contact from "./pages/Contact";
@@ -25,14 +24,6 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/events" element={<EventsList />} />
             <Route path="/event/:id" element={<EventDetail />} />
-            <Route 
-              path="/create-event" 
-              element={
-                <ProtectedRoute>
-                  <CreateEvent />
-                </ProtectedRoute>
-              } 
-            />
             <Route path="/about" element={<AboutUs />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/contact" element={<Contact />} />
