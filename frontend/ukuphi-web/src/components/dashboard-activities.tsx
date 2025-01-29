@@ -30,14 +30,14 @@ const last2TodayNext4Days = Array.from({ length: 7 }, (_, index) => {
 
 export default function Activity() {
     const [notifications, setNotifications] = useState<NotificationProps[]>([]);
-    const { fetchWithAuth } = useApi();
+    const { fetch } = useApi();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         const loadNotifications = async () => {
             try {
-                const data = await fetchWithAuth("/notifications");
+                const data = await fetch("/notifications");
                 setLoading(false);
                 setNotifications(data);
             } catch (error: any) {
@@ -50,7 +50,8 @@ export default function Activity() {
         }
 
         loadNotifications();
-    }, [fetchWithAuth]);
+    }, [fetch]);
+    
     return (
         <div className="bg-white h-auto max-h-screen flex flex-col rounded-xl border">
             <div className="flex flex-row justify-between items-center p-6">

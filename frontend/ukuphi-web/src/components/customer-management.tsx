@@ -66,7 +66,7 @@ const stats = [
 export default function CustomerList() {
     const [selectedCustomer, setSelectedCustomer] = useState<CustomerProps>();
     const [customers, setCustomers] = useState<CustomerProps[]>([]);
-    const { fetchWithAuth } = useApi();
+    const { fetch } = useApi();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -77,7 +77,7 @@ export default function CustomerList() {
     useEffect(() => {
         const loadCustomers = async () => {
             try {
-                const data = await fetchWithAuth("/customers");
+                const data = await fetch("/customers");
                 setLoading(false);
                 setCustomers(data);
             } catch (error: any) {
@@ -90,7 +90,7 @@ export default function CustomerList() {
         }
 
         loadCustomers();
-    }, [fetchWithAuth]);
+    }, [fetch]);
 
 
 

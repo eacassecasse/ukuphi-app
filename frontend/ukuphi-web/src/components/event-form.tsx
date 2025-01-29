@@ -33,6 +33,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import useApi from "@/hooks/use-api"
 import { cloudinaryService } from "@/lib/cloudinary"
 import { toast } from "@/hooks/use-toast"
+import { EventProps } from "./event-management"
 
 
 const formSchema = z.object({
@@ -90,7 +91,7 @@ const formSchema = z.object({
     ).optional()
 })
 
-export function EventForm() {
+export function EventForm({ onEventCreated }: { onEventCreated?: (event: EventProps) => void }) {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -121,7 +122,7 @@ export function EventForm() {
     const [ticketQuantity, setTicketQuantity] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { fetchWithAuth } = useApi();
+    const { fetch } = useApi();
 
     const locationType = form.watch("location.type");
     const address = useMemo(() => form.watch("location.address"), [form]);
@@ -155,7 +156,7 @@ export function EventForm() {
                 imageUrl = await cloudinaryService.upload(file);
             }
 
-            const data = await fetchWithAuth('/events', {
+            const data = await fetch('/events', {
                 method: 'POST',
                 data: {
                     title: payload.title,
@@ -166,10 +167,10 @@ export function EventForm() {
                 },
             });
 
-            if (payload.tickets && payload.tickets.length > 0) {
+            if (Array.isArray(payload.tickets) && payload.tickets.length > 0) {
                 try {
                     const requests = payload.tickets.map(async (ticket) => {
-                        const dat = await fetchWithAuth(`events/${data.id}/tickets`, {
+                        const dat = await fetch(`events/${data.id}/tickets`, {
                             method: 'POST',
                             data: {
                                 type: ticket.type,
@@ -181,11 +182,12 @@ export function EventForm() {
                         return dat;
                     })
 
-                    const responses = await Promise.all(requests);
+                    await Promise.all(requests);
+
                     toast({
                         title: "Tickets",
                         description: (
-                            <pre className="mt-2 w-[340px] rounded-md bg-fire-engine-red p-4">
+                            <pre className="mt-2 w-[340px] rounded-md bg-pine-green p-4">
                                 <code className="text-white">Tickets created successfully</code>
                             </pre>
                         ),
@@ -205,15 +207,25 @@ export function EventForm() {
                 }
             }
             setLoading(false);
-            toast({
-                title: "Event creation",
-                description: (
-                    <pre className="mt-2 w-[340px] rounded-md bg-fire-engine-red p-4">
-                        <code className="text-white">Event created successfully</code>
-                    </pre>
-                ),
-                duration: 5000,
-            })
+            if (data) {
+                form.reset();
+                setTickets([]);
+                setTicketType(null);
+                setTicketPrice(null);
+                setTicketQuantity(null);
+
+                toast({
+                    title: "Event creation",
+                    description: (
+                        <pre className="mt-2 w-[340px] rounded-md bg-pine-green p-4">
+                            <code className="text-white">Event created successfully</code>
+                        </pre>
+                    ),
+                    duration: 5000,
+                })
+
+                onEventCreated && onEventCreated(data);
+            }
         } catch (error: any) {
             setLoading(false);
             setError(error.message || "An error occurred while creating the event.");

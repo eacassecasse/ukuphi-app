@@ -16,14 +16,14 @@ import { format } from "date-fns"
 
 export default function Schedules() {
     const [events, setEvents] = useState<EventProps[]>([]);
-    const { fetchWithAuth } = useApi();
+    const { fetch } = useApi();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         const loadSchedules = async () => {
             try {
-                const data = await fetchWithAuth("/schedules", { withCredentials: true });
+                const data = await fetch("/schedules");
                 setEvents(data || []);
                 setLoading(false);
             } catch (error: any) {
@@ -36,7 +36,7 @@ export default function Schedules() {
         }
 
         loadSchedules();
-    }, [fetchWithAuth]);
+    }, [fetch]);
 
     return (
         <div className="w-full px-4">

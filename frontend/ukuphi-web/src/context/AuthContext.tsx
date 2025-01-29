@@ -1,7 +1,12 @@
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/axios";
-import axios from "axios";
-import { createContext, useContext, useState, useEffect } from "react";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from "react";
+
+interface LoginResponseProps {
+    accessToken: string;
+    refreshToken: string;
+}
 
 interface UserProps {
     id: string;
@@ -17,6 +22,12 @@ interface AuthContextProps {
     loading: boolean;
 }
 
+const storage = {
+    get: (key: string) => localStorage.getItem(key),
+    set: (key: string, value: string) => localStorage.setItem(key, value),
+    remove: (key: string) => localStorage.removeItem(key)
+}
+
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -25,57 +36,108 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [refreshToken, setRefreshToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
+    const isRefreshing = useRef(false);
+    const failedQueue: Array<{ resolve: (token: string) => void; reject: (error: any) => void; }> = useMemo(() => [], []);
 
-    api.interceptors.request.use((config) => {
-        if (accessToken) {
-            config.headers.Authorization = `Bearer ${accessToken}`;
-        }
+    const processQueue = useCallback((error: any, token: string | null = null) => {
+        failedQueue.forEach((promise) => {
+            if (token) {
+                promise.resolve(token);
+            } else {
+                promise.reject(error);
+            }
+        });
 
-        config.withCredentials = true;
+        failedQueue.length = 0;
+    }, [failedQueue]);
 
-        return config;
-    });
+    useEffect(() => {
+        const interceptorId = api.interceptors.request.use((config) => {
+            if (accessToken) {
+                config.headers.Authorization = `Bearer ${accessToken}`;
+            }
+            config.withCredentials = true;
+            return config;
+        });
 
-    api.interceptors.response.use(
-        (response) => response,
-        async (error) => {
-            if (error.response.status === 401 && refreshToken) {
-                try {
-                    const match = document.cookie.match(/(^|;)\\s*refresh_token=([^;]+)/);
-                    const refresh_token = match ? match[2] : null;
+        const responseInterceptor = api.interceptors.response.use(
+            (response: AxiosResponse) => response,
+            async (error: any) => {
+                const originalRequest: AxiosRequestConfig & { _retry?: boolean } = error.config;
 
-                    if (!refresh_token) {
-                        console.error("Refresh token not found in cookies");
-                        throw new Error("Refresh token not found in cookies");
+                if (error.response?.status === 401 && !originalRequest._retry) {
+
+                    if (isRefreshing.current) {
+                        return new Promise((resolve, reject) => {
+                            failedQueue.push({ resolve, reject });
+                        }).then((token: unknown) => {
+                            originalRequest.headers = originalRequest.headers || {};
+                            originalRequest.headers.Authorization = `Bearer ${token}`;
+                            return api.request(originalRequest);
+                        })
+                            .catch((err) => Promise.reject(err));
                     }
 
-                    const { data } = await api.post("/auth/refresh", {}, {
-                        withCredentials: true,
-                    });
+                    originalRequest._retry = true;
+                    isRefreshing.current = true;
 
-                    const { accessToken: newAcessToken } = data;
-                    setAccessToken(newAcessToken);
+                    try {
+                        console.log("Token expired, refreshing");
+                        const { data } = await api.post("/auth/refresh", {}, {
+                            withCredentials: true,
+                        });
 
-                    localStorage.setItem("access_token", newAcessToken);
+                        const { accessToken: newAccessToken } = data;
 
-                    error.config.headers.Authorization = `Bearer ${newAcessToken}`;
+                        setAccessToken(newAccessToken);
+                        storage.set("access_token", newAccessToken);
 
-                    return api.request(error.config);
-                } catch (refreshError) {
-                    console.error("Failed to refresh token: ", refreshError);
-                    logout();
+                        processQueue(null, newAccessToken);
+
+                        originalRequest.headers = originalRequest.headers || {};
+                        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+                        return api.request(originalRequest);
+                    } catch (refreshError) {
+                        console.error("Failed to refresh token: ", refreshError);
+                        processQueue(refreshError, null);
+                        logout();
+                    } finally {
+                        isRefreshing.current = false;
+                    }
                 }
+
+                return Promise.reject(error);
             }
+        );
 
-            return Promise.reject(error);
+        return () => {
+            api.interceptors.request.eject(interceptorId);
+            api.interceptors.request.eject(responseInterceptor);
         }
-    );
+    }, [accessToken, failedQueue, processQueue]);
 
+    const fetchUserProfile = useCallback(async (token: string) => {
+        try {
+            const { data } = await api.get("/auth/profile", {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            
+            setUser(data);
+        } catch (error) {
+            console.error("Failed to fetch user profile: ", error);
+            logout();
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         setLoading(true);
-        const storedAccessToken = localStorage.getItem("access_token");
-        const storedRefreshToken = localStorage.getItem("refresh_token");
+        const storedAccessToken = storage.get("access_token");
+        const storedRefreshToken = storage.get("refresh_token");
 
         if (storedAccessToken && storedRefreshToken) {
             setAccessToken(storedAccessToken);
@@ -84,37 +146,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } else {
             setLoading(false);
         }
-    });
-
-    const fetchUserProfile = async (token: string) => {
-        try {
-            const { data } = await api.get("/auth/profile", {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-
-            setUser(data);
-        } catch (error) {
-            console.error("Failed to fetch user profile: ", error);
-            logout();
-        } finally {
-            setLoading(false);
-        }
-    }
+    }, [fetchUserProfile]);
 
     const login = async (email: string, password: string) => {
         try {
             setLoading(true);
-            const { data } = await api.post("/auth/login", { email, password }, { withCredentials: true });
-
+            const { data }: { data: LoginResponseProps } = await api.post("/auth/login", { email, password }, { withCredentials: true });
             const { accessToken, refreshToken } = data;
             setAccessToken(accessToken);
             setRefreshToken(refreshToken);
 
-            localStorage.setItem("access_token", accessToken);
-            localStorage.setItem("refresh_token", refreshToken);
-            document.cookie = `refresh_token=${refreshToken}; path=/; secure; samesite=strict`;
+            storage.set("access_token", accessToken);
+            storage.set("refresh_token", refreshToken);
 
             await fetchUserProfile(accessToken);
 
@@ -161,8 +204,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setAccessToken(null);
         setRefreshToken(null);
 
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
+        storage.remove("access_token");
+        storage.remove("refresh_token");
     }
 
     return (

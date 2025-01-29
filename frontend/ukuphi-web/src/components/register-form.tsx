@@ -5,13 +5,11 @@ import { Control, FieldPath, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { ChangeEventHandler, useEffect, useState } from "react"
+import { ChangeEventHandler, useState } from "react"
 import { CheckCircle, Circle, Loader } from "lucide-react"
-import { api } from "@/lib/axios"
 import useApi from "@/hooks/use-api"
-import { Modal } from "./modal"
-import { InputOTP } from "./ui/input-otp"
-import { InputOTPForm } from "./otp-form"
+import { Modal } from "@/components/modal"
+import { InputOTPForm } from "@/components/otp-form"
 
 const formSchema = z.object({
   name: z
@@ -106,10 +104,11 @@ export function RegisterForm({
             phone: `+27${Math.floor(Math.random() * 1000000000)}`,
           },
         });
-        console.log(data);
+        
         setLoading(false);
-        setOtpModalVisible(true);
         setUserId(data.id);
+        setOtpModalVisible(true);
+        form.reset();
       } catch (error) {
         setLoading(false);
         console.error(error);

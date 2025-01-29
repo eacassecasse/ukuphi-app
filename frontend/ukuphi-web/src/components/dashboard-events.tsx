@@ -21,7 +21,7 @@ const formatDate = (date: Date) => {
 export default function EventList({ className, ...props }: { className?: string }) {
     const [selectedEvent, setSelectedEvent] = useState<EventProps>();
     const [events, setEvents] = useState<EventProps[]>();
-    const { fetchWithAuth } = useApi();
+    const { fetch } = useApi();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const today = new Date();
@@ -33,7 +33,7 @@ export default function EventList({ className, ...props }: { className?: string 
     useEffect(() => {
         const loadSchedules = async () => {
             try {
-                const data = await fetchWithAuth("/schedules", { withCredentials: true });
+                const data = await fetch("/schedules");
                 setLoading(false);
                 setEvents(data);
             } catch (error: any) {
@@ -46,7 +46,7 @@ export default function EventList({ className, ...props }: { className?: string 
         }
 
         loadSchedules();
-    }, [fetchWithAuth]);
+    }, [fetch]);
 
     return (
         <div className={`grid grid-cols-2 rounded-xl gap-4 p-6 bg-white ${className}`} {...props}>

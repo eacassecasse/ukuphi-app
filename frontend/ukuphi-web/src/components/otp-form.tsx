@@ -23,6 +23,8 @@ import useApi from "@/hooks/use-api"
 import { Loader } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { useNavigation } from "@/context/NavigationContext";
+import { useAuth } from "@/context/AuthContext"
 
 const formSchema = z.object({
     pin: z.string().min(6, {
@@ -40,6 +42,8 @@ export function InputOTPForm({ id }: { id: string | null }) {
 
     const { fetch } = useApi();
     const { toast } = useToast();
+    const { setActivePage } = useNavigation();
+    const { user } = useAuth();
 
     const [loading, setLoading] = useState(false);
 
@@ -67,6 +71,12 @@ export function InputOTPForm({ id }: { id: string | null }) {
                         </pre>
                     ),
                 })
+
+                if (user?.role === "ATTENDEE") {
+                    setActivePage("landing");
+                } else {
+                    setActivePage("dashboard");
+                }
             } catch (error) {
                 setLoading(false);
                 toast({

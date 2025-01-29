@@ -26,9 +26,11 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Button } from "./ui/button"
-import { Card, CardHeader, CardDescription, CardContent } from "./ui/card"
-import { NavSecondary } from "./nav-secondary"
-import { Separator } from "./ui/separator"
+import { Card, CardHeader, CardDescription, CardContent } from "@/components/ui/card"
+import { NavSecondary } from "@/components/nav-secondary"
+import { Separator } from "@/components/ui/separator"
+import { Modal } from "@/components/modal"
+import { EventForm } from "@/components/event-form"
 
 // This is sample data.
 const data = {
@@ -121,12 +123,19 @@ export function AppSidebar({ activeMenu, setActiveMenu, ...props }: React.Compon
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-2.5 p-4">
-                <Button
-                  className="w-full bg-sidebar-foreground text-sidebar-primary-foreground shadow-none"
-                  size="sm"
-                >
-                  Create an Event
-                </Button>
+                <Modal>
+                  <Modal.Button>
+                    <Button
+                      className="w-full bg-sidebar-foreground text-sidebar-primary-foreground shadow-none"
+                      size="sm"
+                    >
+                      Create an Event
+                    </Button>
+                  </Modal.Button>
+                  <Modal.Content className="max-w-3xl justify-center items-center p-12">
+                    <EventForm />
+                  </Modal.Content>
+                </Modal>
               </CardContent>
             </form>
           </Card>

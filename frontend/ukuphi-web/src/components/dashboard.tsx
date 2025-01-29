@@ -117,14 +117,14 @@ export default function Dashboard() {
     const [bookings, setBookings] = useState<BookingProps[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { fetchWithAuth } = useApi();
+    const { fetch } = useApi();
 
     const total = bookings?.reduce((acc, booking) => acc + booking.amount, 0);
 
     useEffect(() => {
         const loadBookings = async () => {
             try {
-                const data = await fetchWithAuth("/bookings");
+                const data = await fetch("/bookings");
                 setLoading(false);
                 setBookings(data);
             } catch (error: any) {
@@ -137,7 +137,7 @@ export default function Dashboard() {
         }
 
         loadBookings();
-    }, [fetchWithAuth]);
+    }, [fetch]);
 
 
     return (

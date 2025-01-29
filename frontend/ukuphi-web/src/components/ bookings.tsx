@@ -15,7 +15,7 @@ import { BookingProps } from "./dashboard"
 
 export default function Bookings() {
     const [bookings, setBookings] = useState<BookingProps[]>([]);
-    const { fetchWithAuth } = useApi();
+    const { fetch } = useApi();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -24,7 +24,7 @@ export default function Bookings() {
     useEffect(() => {
         const loadBookings = async () => {
             try {
-                const data = await fetchWithAuth("/bookings", { withCredentials: true });
+                const data = await fetch("/bookings");
                 setLoading(false);
                 setBookings(data);
             } catch (error: Error | any) {
@@ -37,7 +37,7 @@ export default function Bookings() {
         }
 
         loadBookings();
-    }, [fetchWithAuth]);
+    }, [fetch]);
 
     return (
         <div className="w-full px-4">

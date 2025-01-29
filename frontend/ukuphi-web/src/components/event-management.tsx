@@ -13,9 +13,9 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { EventForm } from "@/components/event-form"
 import { Modal } from "@/components/modal"
 import useApi from "@/hooks/use-api"
-import { format, set } from "date-fns"
+import { format } from "date-fns"
 
-interface EventProps {
+export interface EventProps {
     title: string;
     description: string;
     location: string;
@@ -59,7 +59,7 @@ const stats = [
 
 
 export default function EventList() {
-    const { fetchWithAuth } = useApi();
+    const { fetch } = useApi();
     const [selectedEvent, setSelectedEvent] = useState<EventProps>();
     const [events, setEvents] = useState<EventProps[]>([]);
     const [loading, setLoading] = useState(true);
@@ -69,10 +69,14 @@ export default function EventList() {
         setSelectedEvent(event);
     }
 
+    const handleNewEvent = (newEvent: EventProps) => {
+        setEvents((preEvents) => [...preEvents, newEvent]);
+    }
+
     useEffect(() => {
         const loadSchedules = async () => {
             try {
-                const data = await fetchWithAuth("/schedules");
+                const data = await fetch("/schedules");
                 setLoading(false);
                 setEvents(data);
             } catch (error: any) {
@@ -85,7 +89,7 @@ export default function EventList() {
         }
 
         loadSchedules();
-    }, [fetchWithAuth]);
+    }, [fetch]);
 
     const locations = events && events.map(event => event.location);
 
@@ -131,7 +135,7 @@ export default function EventList() {
                                     <Button className="px-6 rounded-3xl">Add New <Plus /></Button>
                                 </Modal.Button>
                                 <Modal.Content className="max-w-3xl justify-center items-center p-12">
-                                    <EventForm />
+                                    <EventForm onEventCreated={handleNewEvent} />
                                 </Modal.Content>
                             </Modal>
                             <Select>

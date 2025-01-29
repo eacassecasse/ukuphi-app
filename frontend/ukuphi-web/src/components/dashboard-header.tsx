@@ -18,14 +18,14 @@ export interface NotificationProps {
 }
 
 export default function Header() {
-    const { fetchWithAuth } = useApi();
+    const { fetch } = useApi();
     const { user, logout } = useAuth();
     const [notifications, setNotifications] = useState<NotificationProps[]>([]);
 
     useEffect(() => {
         const loadNotifications = async () => {
             try {
-                const data = await fetchWithAuth("/notifications", { withCredentials: true });
+                const data = await fetch("/notifications");
                 setNotifications(data);
             } catch (error) {
                 console.error(error);
@@ -33,7 +33,7 @@ export default function Header() {
         }
 
         loadNotifications();
-    }, [fetchWithAuth]);
+    }, [fetch]);
 
     const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
         console.log(event.target.value);
