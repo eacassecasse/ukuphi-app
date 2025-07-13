@@ -43,7 +43,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     AuthController.loginHandler
   );
 
-  fastify.get(
+  fastify.post(
     "/refresh",
     {
       preHandler: [fastify.authenticate],
