@@ -1,0 +1,441 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ATTENDEE
+  ORGANIZER
+  ADMIN
+}
+
+enum VerificationStatus {
+  PHONE_VERIFIED
+  ID_VERIFIED
+  UNVERIFIED
+}
+
+model User {
+  id                 String             @id @default(uuid())
+  name               String
+  email              String             @unique
+  phone              String             @unique
+  password           String
+  role               UserRole           @default(ATTENDEE)
+  verificationStatus VerificationStatus @default(UNVERIFIED) @map("verification_status")
+  preferredLanguage  String             @default("pt-MZ") @map("preferred_language")
+  accountCredit      Float              @default(0.00) @map("account_credit")
+  marketingOptIn     Boolean            @default(false) @map("marketing_opt_in")
+  lastLogin          DateTime?          @map("last_login")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  events        Event[]
+  orders        Order[]
+  reviews       EventReview[]
+  savedEvents   SavedEvent[]
+  notifications Notification[]
+  refunds       Refund[]
+  posts         Post[]
+  comments      PostComment[]
+  postLikes     PostLike[]
+
+  @@index([email, phone], name: "idx_user_contact")
+  @@map("users")
+}
+
+model Venue {
+  id           String   @id @default(uuid())
+  name         String
+  address      String
+  city         String
+  capacity     Int
+  contactPhone String?  @map("contact_phone")
+  contactEmail String?  @map("contact_email")
+  geoPoint     String?  @map("geo_point")
+  shard        Int      @default(0)
+  amenities    String[]
+  images       String[]
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  events Event[]
+
+  @@index([name, city], name: "idx_venue_location")
+  @@map("venues")
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+model Event {
+  id                 String      @id @default(uuid())
+  organizerId        String      @map("organizer_id")
+  venueId            String?     @map("venue_id")
+  categoryId         String      @map("category_id")
+  title              String
+  description        String?
+  status             EventStatus @default(DRAFT)
+  isOnline           Boolean     @default(false) @map("is_online")
+  onlineURL          String?     @map("online_url")
+  imageURL           String
+  date               DateTime
+  endDate            DateTime?   @map("end_date")
+  timezone           String      @default("Africa/Maputo")
+  ageRestriction     String?     @map("age_restriction")
+  headerImage        String?     @map("header_image")
+  cancellationPolicy String?     @map("cancellation_policy")
+  termsAndConditions String?     @map("terms_and_conditions")
+  shard              Int         @default(0)
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
+
+  organizer User           @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  venue     Venue?         @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  category  EventCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  ticketTypes TicketType[]
+  reviews     EventReview[]
+  savedBy     SavedEvent[]
+  orders      Order[]
+  Ticket      Ticket[]
+
+  @@index([organizerId], name: "idx_events_organizer")
+  @@index([date], name: "idx_events_date")
+  @@index([venueId], map: "idx_events_venue")
+  @@index([categoryId], map: "idx_events_category")
+  @@index([status], name: "idx_events_status")
+  @@map("events")
+}
+
+model EventCategory {
+  id        String  @id @default(uuid())
+  parentId  String? @map("parent_id")
+  name      String
+  slug      String  @unique
+  iconUrl   String? @map("icon_url")
+  isPrimary Boolean @default(false) @map("is_primary")
+  shard     Int     @default(0)
+
+  parent   EventCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children EventCategory[] @relation("CategoryHierarchy")
+
+  events Event[]
+
+  @@index([parentId], name: "idx_event_category_parent")
+  @@map("event_categories")
+}
+
+model TicketType {
+  id             String    @id @default(uuid())
+  eventId        String    @map("event_id")
+  name           String
+  description    String?
+  price          Float
+  currency       String    @default("MZN")
+  bookingFee     Float     @default(0.00) @map("booking_fee")
+  isTransferable Boolean   @default(true) @map("is_transferable")
+  minPerOrder    Int       @default(1) @map("min_per_order")
+  maxPerOrder    Int?      @map("max_per_order")
+  salesStart     DateTime  @default(now()) @map("sales_start")
+  salesEnd       DateTime? @map("sales_end")
+  shard          Int       @default(0)
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  event     Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  inventory TicketInventory?
+  tickets   Ticket[]
+
+  @@index([eventId], name: "idx_ticket_types_event")
+  @@index([price], name: "idx_ticket_price")
+  @@map("ticket_types")
+}
+
+model TicketInventory {
+  id                String @id @default(uuid())
+  ticketTypeId      String @unique @map("ticket_type_id")
+  initialQuantity   Int    @map("initial_quantity")
+  availableQuantity Int    @map("available_quantity")
+  holdQuantity      Int    @default(0) @map("hold_quantity")
+  version           Int    @default(0)
+  shard             Int    @default(0)
+
+  ticketType TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+
+  @@index([ticketTypeId, availableQuantity], map: "idx_ticket_inventory_available")
+  @@map("ticket_inventory")
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PAYMENT_FAILED
+  PARTIALLY_REFUNDED
+  FULLY_REFUNDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  MPESA
+  CREDIT_CARD
+  DEBIT_CARD
+  MOBILE_MONEY
+  BANK_TRANSFER
+  CASH
+}
+
+model Order {
+  id                   String         @id @default(uuid())
+  userId               String         @map("user_id")
+  eventId              String         @map("event_id")
+  status               OrderStatus    @default(PENDING_PAYMENT)
+  totalAmount          Float          @map("total_amount")
+  currency             String         @default("MZN")
+  paymentMethod        PaymentMethod? @map("payment_method")
+  paymentGatewayId     String?        @map("payment_gateway_id")
+  paymentData          Json?          @map("payment_data")
+  paymentQrCode        String?        @map("payment_qr_code")
+  paymentAttempts      Int            @default(0) @map("payment_attempts")
+  reservationExpiresAt DateTime?      @map("reservation_expires_at")
+  createdAt            DateTime       @default(now()) @map("created_at")
+  completedAt          DateTime?      @map("completed_at")
+  refundedAt           DateTime?      @map("refunded_at")
+  shard                Int            @default(0)
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets Ticket[]
+  refunds Refund[]
+
+  @@index([userId], map: "idx_order_user")
+  @@index([eventId], map: "idx_order_event")
+  @@index([paymentGatewayId], map: "idx_order_payment_gateway")
+  @@index([createdAt], name: "idx_order_created_at")
+  @@index([status], name: "idx_order_status")
+  @@map("orders")
+}
+
+enum TicketStatus {
+  ACTIVE
+  CHECKED_IN
+  TRANSFERRED
+  REFUNDED
+}
+
+model Ticket {
+  id            String       @id @default(uuid())
+  orderId       String       @map("order_id")
+  ticketTypeId  String       @map("ticket_type_id")
+  eventId       String       @map("event_id")
+  attendeeName  String?      @map("attendee_name")
+  attendeeEmail String?      @map("attendee_email")
+  qrCode        String       @unique @map("qr_code")
+  status        TicketStatus @default(ACTIVE)
+  checkInTime   DateTime?    @map("check_in_time")
+  transferToken String?      @map("transfer_token")
+  shard         Int          @default(0)
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  order      Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  ticketType TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+  event      Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([qrCode], name: "idx_ticket_qr_code")
+  @@index([ticketTypeId], name: "idx_ticket_type")
+  @@index([orderId], name: "idx_ticket_order")
+  @@index([status], name: "idx_ticket_status")
+  @@map("tickets")
+}
+
+model EventReview {
+  id         String   @id @default(uuid())
+  eventId    String   @map("event_id")
+  userId     String   @map("user_id")
+  rating     Int      @default(3)
+  comment    String?
+  shard      Int      @default(0)
+  isVerified Boolean  @default(false) @map("is_verified")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId], name: "idx_event_views_event")
+  @@index([userId], name: "idx_event_views_user")
+  @@index([rating], name: "idx_event_views_rating")
+  @@map("event_reviews")
+}
+
+model SavedEvent {
+  userId    String   @map("user_id")
+  eventId   String   @map("event_id")
+  shard     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@id([userId, eventId])
+  @@index([eventId], name: "idx_saved_events_event")
+  @@index([userId], name: "idx_saved_events_user")
+  @@map("saved_events")
+}
+
+enum NotificationType {
+  SYSTEM
+  EVENT
+  PAYMENT
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  title     String
+  message   String
+  type      NotificationType
+  isRead    Boolean          @default(false) @map("is_read")
+  metadata  Json?
+  shard     Int              @default(0)
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "idx_notifications_user")
+  @@index([isRead], name: "idx_notifications_is_read")
+  @@index([createdAt], name: "idx_notifications_created_at")
+  @@map("notifications")
+}
+
+enum RefundReason {
+  CANCELLED
+  DISPUTE
+  CUSTOMER_REQUEST
+}
+
+enum RefundStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model Refund {
+  id            String       @id @default(uuid())
+  orderId       String       @map("order_id")
+  processedById String?      @map("processed_by_id")
+  amount        Float
+  reason        RefundReason
+  status        RefundStatus @default(PENDING)
+  gatewayId     String?      @map("gateway_id")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  completedAt   DateTime?    @map("completed_at")
+  shard         Int          @default(0)
+
+  order       Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  processedBy User? @relation(fields: [processedById], references: [id], onDelete: SetNull)
+
+  @@index([orderId], name: "idx_refunds_order")
+  @@index([processedById], name: "idx_refunds_processed_by")
+  @@index([status], name: "idx_refunds_status")
+  @@map("refunds")
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Post {
+  id            String     @id @default(uuid())
+  authorId      String     @map("author_id")
+  title         String
+  content       String
+  excerpt       String?
+  slug          String     @unique
+  featuredImage String?    @map("featured_image")
+  location      String?
+  status        PostStatus @default(DRAFT)
+  publishedAt   DateTime   @map("published_at")
+  shard         Int        @default(0)
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  author   User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments PostComment[]
+  tags     PostTag[]
+  likes    PostLike[]
+  postTags PostTagRelation[]
+
+  @@index([authorId])
+  @@index([slug])
+  @@index([publishedAt], name: "idx_posts_published_at")
+  @@index([status], name: "idx_posts_status")
+  @@map("posts")
+}
+
+model PostTag {
+  id    String @id @default(uuid())
+  name  String
+  slug  String @unique
+  shard Int    @default(0)
+
+  posts  PostTagRelation[]
+  Post   Post?             @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String?
+
+  @@index([slug], name: "idx_post_tags_slug")
+  @@map("post_tags")
+}
+
+model PostTagRelation {
+  postId String @map("post_id")
+  tagId  String @map("tag_id")
+
+  post Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  PostTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([tagId], name: "idx_post_tag_relations_tag")
+  @@index([postId], name: "idx_post_tag_relations_post")
+  @@map("post_tag_relations")
+}
+
+model PostLike {
+  postId    String   @map("post_id")
+  userId    String   @map("user_id")
+  shard     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([userId], name: "idx_post_likes_user")
+  @@index([postId], name: "idx_post_likes_post")
+  @@map("post_likes")
+}
+
+model PostComment {
+  id       String   @id @default(uuid())
+  userId   String   @map("user_id")
+  postId   String   @map("post_id")
+  title    String
+  content  String
+  shard    Int      @default(0)
+  createAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([userId])
+  @@map("post_comments")
+}

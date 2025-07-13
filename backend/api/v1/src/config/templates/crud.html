@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9f9; }
+    .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; }
+    .header { text-align: center; background: #28A745; color: white; padding: 10px 0; border-radius: 8px 8px 0 0; }
+    .content { margin: 20px; font-size: 16px; }
+    .footer { text-align: center; font-size: 12px; color: #888; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>{{crud_title}}</h1>
+    </div>
+    <div class="content">
+      <p>Hello {{userName}},</p>
+      <p>The event "{{eventName}}" has been {{actionType}}.</p>
+      <p><strong>Date:</strong> {{eventDate}}<br>
+      <strong>Location:</strong> {{eventLocation}}</p>
+      <p>For more information, visit: <a href="{{link}}" style="color: #28A745;">Event Details</a></p>
+    </div>
+    <div class="footer">
+      <p>Thank you for being part of our community!</p>
+    </div>
+  </div>
+</body>
+</html>

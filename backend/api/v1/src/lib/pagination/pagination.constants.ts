@@ -1,0 +1,8 @@
+export const PAGINATION_OPTIONS = {
+  DEFAULT_SHARD: 0,
+  FIRST_PAGE: 1,
+  MAX_SHARDS: 10,
+  PAGE_SIZE: 10,
+  PAGE_QUERY_PARAM: "page",
+  SHARD_QUERY_PARAM: "shard",
+} as const;
