@@ -10,7 +10,7 @@ import {
   VerificationStatusSchema,
 } from "@/modules/users/users.schema";
 
-export class UserService {
+export class AuthService {
   static async register(data: CreateUserRequestBody) {
     return db.user.create({
       data: {

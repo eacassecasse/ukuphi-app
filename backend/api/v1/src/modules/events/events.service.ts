@@ -1,82 +1,67 @@
-import { prisma } from '@lib/prisma/client';
+import { prismaClient } from '@lib/prisma/client';
 import { 
   CountableCollection,
   Page, 
   PaginatedData 
 } from '@lib/pagination/pagination.types';
-import { 
-  queryParameters,
-  getNextPage,
-} from '@lib/pagination/pagination.utils';
+import { BasePaginatedService } from '@lib/pagination/base-paginated.service';
 import { Event } from '@prisma/client';
 
-export class EventService {
-  private readonly eventCollection: CountableCollection = {
-    count: async (params) => {
-      return prisma.event.count({
-        where: params.where,
-        skip: params.skip,
-        take: params.take
-      });
-    }
-  };
+export class EventService extends BasePaginatedService<Event> {
+  protected getCollection(additionalWhere?: any): CountableCollection {
+    return {
+      count: async (params) => {
+        const combinedWhere = { ...params.where, ...additionalWhere };
+        return prismaClient.event.count({
+          where: combinedWhere,
+          skip: params.skip,
+          take: params.take
+        });
+      }
+    };
+  }
+
+  protected getEntityName(): string {
+    return 'Event';
+  }
+
+  protected async findMany(params: {
+    skip: number;
+    take: number;
+    where?: any;
+    orderBy?: any;
+    include?: any;
+    select?: any;
+  }): Promise<Event[]> {
+    return prismaClient.event.findMany(params);
+  }
+
+  protected async count(params: {
+    where?: any;
+    skip?: number;
+    take?: number;
+  }): Promise<number> {
+    return prismaClient.event.count(params);
+  }
 
   async getEvents(page: Page): Promise<PaginatedData<Event>> {
-    const query = queryParameters({ page });
-    
-    const events = await prisma.event.findMany({
-      ...query,
+    return this.getPaginatedData(page, {
       orderBy: { date: 'asc' },
       include: {
         venue: true,
         category: true
       }
     });
-
-    const nextPage = await getNextPage({
-      currentPage: page,
-      collection: this.eventCollection
-    });
-
-    return { 
-      data: events, 
-      nextPage 
-    };
   }
 
   async getEventsByOrganizer(
     organizerId: string,
     page: Page
   ): Promise<PaginatedData<Event>> {
-    const { where, ...query } = queryParameters({ page });
-    
-    const events = await prisma.event.findMany({
-      ...query,
-      where: { ...where, organizerId },
+    return this.getPaginatedData(page, {
+      where: { organizerId },
       orderBy: { date: 'asc' }
     });
-
-    const nextPage = await getNextPage({
-      currentPage: page,
-      collection: {
-        count: async (params) => {
-          return prisma.event.count({
-            where: { ...params.where, organizerId },
-            skip: params.skip,
-            take: params.take
-          });
-        }
-      }
-    });
-
-    return { 
-      data: events, 
-      nextPage 
-    };
   }
 
-  private omitShard<T extends { shard?: number }>(event: T): Omit<T, 'shard'> {
-    const { shard: _, ...rest } = event;
-    return rest;
-  }
 }

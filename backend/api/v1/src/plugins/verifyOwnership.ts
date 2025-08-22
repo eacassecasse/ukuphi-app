@@ -1,12 +1,11 @@
-import { prisma } from "@/lib/prisma/client";
-import { FastifyJWT } from "@fastify/jwt";
+import { prismaClient } from "@/lib/prisma/client";
 import { FastifyReply, FastifyRequest } from "fastify";
 
 export async function verifyOwnership(
   request: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply
 ) {
-  const user = await prisma.user.findUnique({
+  const user = await prismaClient.user.findUnique({
     where: {
       id: request.params.id,
     },

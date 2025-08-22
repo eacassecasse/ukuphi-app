@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export const UserRoleSchema = z.enum(['ATTENDEE', 'ORGANIZER', 'ADMIN']);
 export type UserRole = z.infer<typeof UserRoleSchema>;

@@ -2,7 +2,7 @@ import {
   UserRoleSchema,
   VerificationStatusSchema,
 } from "@/lib/schemas/schemas.enums";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 // Mozambique phone validation (+258 or 0 prefix)
 const PhoneSchema = z.string().regex(/^(\+258|0)?[82-87][0-9]{7}$/, {

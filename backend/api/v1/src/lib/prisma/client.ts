@@ -4,7 +4,7 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-export const prisma =
+export const prismaClient =
   globalThis.prisma ||
   new PrismaClient({
     log:
@@ -14,13 +14,13 @@ export const prisma =
   });
 
 if (process.env.NODE_ENV !== "production") {
-  globalThis.prisma = prisma;
+  globalThis.prisma = prismaClient;
 }
 
 // Handle graceful shutdown
 const shutdown = async (signal: NodeJS.Signals) => {
   console.log(`Received ${signal}. Disconnecting Prisma Client...`);
-  await prisma.$disconnect();
+  await prismaClient.$disconnect();
   process.exit(0);
 };
 

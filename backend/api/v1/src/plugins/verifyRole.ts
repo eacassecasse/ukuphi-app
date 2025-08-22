@@ -3,7 +3,7 @@ import {
   ForbiddenError,
   NotFoundError,
 } from "@/lib/errors/http/errors";
-import { prisma } from "@/lib/prisma/client";
+import { prismaClient } from "@/lib/prisma/client";
 import { FastifyReply, FastifyRequest } from "fastify";
 
 type UserRole = "ATTENDEE" | "ORGANIZER" | "ADMIN";
@@ -14,7 +14,7 @@ export function verifyRole(allowedRoles: UserRole[]) {
       throw new AuthError();
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await prismaClient.user.findUnique({
       where: {
         id: request.user.id,
       },

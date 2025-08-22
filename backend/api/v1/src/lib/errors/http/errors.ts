@@ -29,16 +29,16 @@ export default class BusinessError extends GenericError {
 
 export class AuthError extends GenericError {
   readonly statusCode = 401;
-  constructor() {
-    super("Not Authorized");
+  constructor(message?: string) {
+    super(message ?? "Not Authorized");
     this.name = "Unauthorized";
   }
 }
 
 export class ForbiddenError extends GenericError {
   readonly statusCode = 403;
-  constructor() {
-    super("Access Denied");
+  constructor(message?: string) {
+    super(message ?? "Access Denied");
     this.name = "Forbidden";
   }
 }

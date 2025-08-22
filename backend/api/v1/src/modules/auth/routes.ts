@@ -1,28 +1,14 @@
 import { validateWithZod } from "@/utils/validation.zod";
-import { FastifyInstance } from "fastify";
-import {
-  JSONLoginResponseSchema,
-  JSONLoginSchema,
-  LoginSchema,
-} from "./auth.schema";
-import { AuthController } from "./controller";
+import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
+import { AuthController } from "@modules/auth/auth.controller";
+import { LoginSchema } from "@modules/auth/auth.schema";
 
-export async function AuthRoutes(fastify: FastifyInstance) {
+export const AuthRoutes: FastifyPluginCallbackTypebox = (fastify) => {
   fastify.post(
     "/login",
     {
       schema: {
-        body: JSONLoginSchema,
-        response: {
-          200: JSONLoginResponseSchema,
-        },
-      },
-      preHandler: async (req, res) => {
-        try {
-          req.body = validateWithZod(LoginSchema)(req.body);
-        } catch (error: any) {
-          res.status(400).send({ error: error.message });
-        }
+        body: LoginSchema,
       },
     },
     AuthController.loginHandler

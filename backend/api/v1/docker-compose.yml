@@ -12,5 +12,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/setup.sql:/docker-entrypoint-initdb.d/setup.sql
+
+  ukuphi-app-redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data/var/lib/redis/data
+
 volumes:
   postgres_data:
+  redis_data:

@@ -1,10 +1,10 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 // Pagination
 export const PaginationSchema = z.object({
-  page: z.number().int().positive().default(1),
-  limit: z.number().int().positive().max(100).default(10),
-  shard: z.number().int().nonnegative().optional()
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(10),
+  shard: z.coerce.number().int().nonnegative().optional()
 });
 
 // Filtering
